@@ -8,6 +8,7 @@ CA65 := $(shell which ca65 2>/dev/null)
 LD65 := $(shell which ld65 2>/dev/null)
 GO   := $(shell which go 2>/dev/null)
 EMU  := $(shell which Mesen-S 2>/dev/null || which higan 2>/dev/null || which snes9x 2>/dev/null)
+ASAR := $(shell which asar 2>/dev/null || echo ./resources/asar.exe)
 
 ifeq ($(CA65),)
 $(error "ca65 not found in PATH. Please install cc65 and ensure ca65 is available.")
@@ -31,12 +32,17 @@ LINKCFG   := $(SRCDIR)/hirom.cfg   # build.sh uses hirom.cfg
 # --------------------------------------------------------------------
 # Phony targets
 # --------------------------------------------------------------------
-.PHONY: all clean run archive update-wram regen-banks
+.PHONY: all clean run archive update-wram regen-banks spc
 
 # --------------------------------------------------------------------
 # Default target: full two-pass build + archive
 # --------------------------------------------------------------------
 all: $(OUTDIR)/$(GAME).sfc archive
+
+# If spc.bin doesn't exist yet, auto-build it during all
+ifeq ($(wildcard $(SRCDIR)/spc/spc.bin),)
+all: spc
+endif
 
 # --------------------------------------------------------------------
 # Asset generation via Go utilities
@@ -114,6 +120,20 @@ regen-banks:
 	@echo "Regenerated bank and tile_bank ASM files from NES ROM."
 
 # --------------------------------------------------------------------
+# Optional: SPC build using asar
+# --------------------------------------------------------------------
+spc: $(SRCDIR)/spc/spc.bin
+
+$(SRCDIR)/spc/spc.bin: $(SRCDIR)/spc/spc.asm
+	@if [ ! -x "$(ASAR)" ]; then \
+		echo "Error: asar not found (expected in PATH or ./resources/asar.exe)."; \
+		echo "Please install asar or place asar.exe in ./resources/"; \
+		exit 1; \
+	fi
+	$(ASAR) $< $@
+	@echo "Built SPC binary: $@"
+
+# --------------------------------------------------------------------
 # Housekeeping
 # --------------------------------------------------------------------
 
@@ -126,4 +146,5 @@ clean:
 	       $(SRCDIR)/options_macro_defs.asm \
 	       $(SRCDIR)/pause-bg2.bin \
 	       $(SRCDIR)/msu1-credits.bin \
-	       $(SRCDIR)/wram_routines.bin
+	       $(SRCDIR)/wram_routines.bin \
+	       $(SRCDIR)/spc/spc.bin
