@@ -1,75 +1,129 @@
-# Rumbleminzie's SNES Castlevaina port
+# Castlevania SNES Port - Makefile equivalent of build.sh
+# Works under MSYS2/MinGW (Windows) and Unix-like shells
 
-# Detecting executables
-CC65 := $(shell command -v cc65 2>/dev/null)
-CA65 := $(shell command -v ca65 2>/dev/null)
-LD65 := $(shell command -v ld65 2>/dev/null)
-GO    := $(shell command -v go 2>/dev/null)
-EMU   := $(shell command -v Mesen-S 2>/dev/null || command -v higan 2>/dev/null || command -v snes9x 2>/dev/null)
+# --------------------------------------------------------------------
+# Toolchain detection
+# --------------------------------------------------------------------
+CA65 := $(shell which ca65 2>/dev/null)
+LD65 := $(shell which ld65 2>/dev/null)
+GO   := $(shell which go 2>/dev/null)
+EMU  := $(shell which Mesen-S 2>/dev/null || which higan 2>/dev/null || which snes9x 2>/dev/null)
 
-# Check required tools
-ifeq ($(CC65),)
-$(error "cc65 not found in PATH")
-endif
 ifeq ($(CA65),)
-$(error "ca65 not found in PATH")
+$(error "ca65 not found in PATH. Please install cc65 and ensure ca65 is available.")
 endif
 ifeq ($(LD65),)
-$(error "ld65 not found in PATH")
+$(error "ld65 not found in PATH. Please install cc65 and ensure ld65 is available.")
 endif
 ifeq ($(GO),)
-$(error "go not found in PATH")
+$(error "Go compiler not found in PATH. Please install Go (https://go.dev/dl/).")
 endif
 
-GAME := Castlevania
-OUTDIR := out
-SRCDIR := src
+# --------------------------------------------------------------------
+# Project variables
+# --------------------------------------------------------------------
+GAME      := Castlevania
+SRCDIR    := src
+OUTDIR    := out
+ARCHIVE   := $(OUTDIR)/buildarchive
+LINKCFG   := $(SRCDIR)/hirom.cfg   # build.sh uses hirom.cfg
 
-.PHONY: all clean run rebuild_wram
+# --------------------------------------------------------------------
+# Phony targets
+# --------------------------------------------------------------------
+.PHONY: all clean run archive update-wram regen-banks
 
-all: $(OUTDIR)/$(GAME).sfc
+# --------------------------------------------------------------------
+# Default target: full two-pass build + archive
+# --------------------------------------------------------------------
+all: $(OUTDIR)/$(GAME).sfc archive
 
-# Create output directory if needed
-$(OUTDIR):
-	mkdir -p $(OUTDIR)
+# --------------------------------------------------------------------
+# Asset generation via Go utilities
+# --------------------------------------------------------------------
 
-# Generate options.bin and macro defs
-$(SRCDIR)/options.bin $(SRCDIR)/options_macro_defs.asm: 
+# Options assets
+$(SRCDIR)/options.bin $(SRCDIR)/options_macro_defs.asm:
 	$(GO) run utilities/generate_options_asm.go
 	mv options.bin $(SRCDIR)/options.bin
 	mv options_macro_defs.asm $(SRCDIR)/options_macro_defs.asm
 
-# Ensure wram_routines.bin exists for first build
+# Tilemap assets
+$(SRCDIR)/pause-bg2.bin $(SRCDIR)/msu1-credits.bin:
+	$(GO) run utilities/generate_tilemaps.go
+	mv pause-bg2.bin $(SRCDIR)/pause-bg2.bin
+	mv msu1-credits.bin $(SRCDIR)/msu1-credits.bin
+
+# Ensure WRAM routines file exists for first build (empty placeholder)
 $(SRCDIR)/wram_routines.bin:
-	@echo "Creating empty wram_routines.bin for first build"
-	touch $(SRCDIR)/wram_routines.bin
+	@test -f $@ || (echo "Creating empty wram_routines.bin"; touch $@)
 
-# Build main.o (depends on main.asm, options, and wram_routines.bin)
-$(OUTDIR)/main.o: $(SRCDIR)/main.asm $(SRCDIR)/options.bin $(SRCDIR)/wram_routines.bin | $(OUTDIR)
+# --------------------------------------------------------------------
+# Build rules
+# --------------------------------------------------------------------
+
+# Assemble main.asm (first pass)
+$(OUTDIR)/main.o: $(SRCDIR)/main.asm \
+                  $(SRCDIR)/options.bin \
+                  $(SRCDIR)/options_macro_defs.asm \
+                  $(SRCDIR)/pause-bg2.bin \
+                  $(SRCDIR)/msu1-credits.bin \
+                  $(SRCDIR)/wram_routines.bin | $(OUTDIR)
+	$(CA65) $(SRCDIR)/main.asm -o $@ -g
+
+# First link pass
+$(OUTDIR)/first-pass.sfc: $(OUTDIR)/main.o
+	$(LD65) -C $(LINKCFG) -o $@ $(OUTDIR)/main.o
+
+# Update WRAM routines after first pass (overwrite placeholder)
+update-wram: $(OUTDIR)/first-pass.sfc
+	dd if=$< of=$(SRCDIR)/wram_routines.bin bs=1 skip=$$((0x1800)) count=$$((0x800))
+
+# Final ROM (depends on updated WRAM)
+$(OUTDIR)/$(GAME).sfc: update-wram
 	$(CA65) $(SRCDIR)/main.asm -o $(OUTDIR)/main.o -g
+	$(LD65) -C $(LINKCFG) -o $@ $(OUTDIR)/main.o
 
-# Build ROM (depends on main.o)
-$(OUTDIR)/$(GAME).sfc: $(OUTDIR)/main.o | $(OUTDIR)
-	$(LD65) -C $(SRCDIR)/hirom.cfg -o $(OUTDIR)/$(GAME).sfc $(OUTDIR)/main.o
+# --------------------------------------------------------------------
+# Archiving and running
+# --------------------------------------------------------------------
 
-# Always extract WRAM routines after ROM is built
-extract_wram: $(OUTDIR)/$(GAME).sfc
-	dd if=$(OUTDIR)/$(GAME).sfc of=$(SRCDIR)/wram_routines.bin bs=1 skip=$$((0x1800)) count=$$((0x800))
+archive: $(OUTDIR)/$(GAME).sfc
+	@mkdir -p $(ARCHIVE)
+	@TIMESTAMP=$$(date '+%Y%m%d%H%M%S'); \
+	FILENAME="$(ARCHIVE)/$(GAME)-$$TIMESTAMP.sfc"; \
+	cp $(OUTDIR)/$(GAME).sfc $$FILENAME; \
+	echo "Archived to: $$FILENAME"
 
-# Optional: rebuild ROM if WRAM routines change
-rebuild_wram: extract_wram
-	$(CA65) $(SRCDIR)/main.asm -o $(OUTDIR)/main.o -g
-	$(LD65) -C $(SRCDIR)/hirom.cfg -o $(OUTDIR)/$(GAME).sfc $(OUTDIR)/main.o
-
-# Run the ROM in the most accurate emulator available
 run: $(OUTDIR)/$(GAME).sfc
 ifneq ($(EMU),)
 	@echo "Launching emulator: $(EMU)"
 	$(EMU) $(OUTDIR)/$(GAME).sfc
 else
 	@echo "No supported SNES emulator found in PATH."
-	@echo "Please install one of: Mesen-S (recommended), Higan, or Snes9x, and add it to PATH."
+	@echo "Please install one of: Mesen-S (recommended), Higan, or Snes9x."
 endif
 
+# --------------------------------------------------------------------
+# Optional: regenerate NES banks if source ROM changes
+# --------------------------------------------------------------------
+regen-banks:
+	$(GO) run utilities/parseNesFileToBanks.go
+	mv bank*.asm $(SRCDIR)/ || true
+	mv tile_bank*.asm $(SRCDIR)/ || true
+	@echo "Regenerated bank and tile_bank ASM files from NES ROM."
+
+# --------------------------------------------------------------------
+# Housekeeping
+# --------------------------------------------------------------------
+
+$(OUTDIR):
+	mkdir -p $(OUTDIR)
+
 clean:
-	rm -rf $(OUTDIR)/*.o $(OUTDIR)/$(GAME).sfc $(SRCDIR)/options.bin $(SRCDIR)/options_macro_defs.asm $(SRCDIR)/wram_routines.bin
+	rm -rf $(OUTDIR) \
+	       $(SRCDIR)/options.bin \
+	       $(SRCDIR)/options_macro_defs.asm \
+	       $(SRCDIR)/pause-bg2.bin \
+	       $(SRCDIR)/msu1-credits.bin \
+	       $(SRCDIR)/wram_routines.bin
