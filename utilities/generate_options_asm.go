@@ -279,6 +279,7 @@ func main() {
 		{Index: 5, Name: "PLAYLIST", Values: []string{"ORCHESTRAL","PROG METAL","CHRONICLES","VRC6","MSX SCC", "ADLIB OPL2"}},
 		{Index: 6, Name: "RUMBLE", Values: []string{"ON","OFF"}},
 		{Index: 7, Name: "CONTROLS", Values: []string{"R-SWAP X-USE","R-USE X-SWAP"}},
+		{Index: 8, Name: "GRAPHICS", Values: []string{"ORIGINAL", "16-BIT"}},
 	
 	}
 

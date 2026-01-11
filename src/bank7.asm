@@ -337,7 +337,15 @@
 .byte $C9, $0A, $F0, $0A, $C9, $12, $F0, $0E, $20, $EA, $C9, $4C, $1F, $C3, $20, $EA
 .byte $C9, $A9, $0E, $4C, $68, $C3, $4C, $93, $C5, $CA, $D0, $0A, $A9, $01, $A9, $03
 .byte $20, $23, $FD, $C6, $19, $60, $A9, $08, $A9, $0A, $20, $23, $FD, $A9, $55, $20
-.byte $A7, $C1, $A9, $0F, $4C, $68, $C3, $A5, $F5, $29, $10, $D0, $1B, $A5, $F5, $29
+.byte $A7, $C1
+
+; set state to ending
+  ; LDA #$0F
+  ; JMP $C368
+  jmlb setup_ending_rewrite, $a0
+  nop
+
+.byte $A5, $F5, $29, $10, $D0, $1B, $A5, $F5, $29
 .byte $20, $F0, $49, $A9, $04, $20, $A7, $C1, $AE, $F1, $07, $E8, $8A, $29, $01, $8D
 .byte $F1, $07, $18, $69, $2C, $4C, $95, $CC, $A6, $28, $BD, $9D, $C8, $85, $28, $AD
 .byte $F1, $07, $D0, $21, $A9, $04, $85, $2A, $A9, $03, $85, $2C, $A9, $00, $85, $64
@@ -1437,7 +1445,7 @@ jsr set_ppu_control ; STA PpuControl_2000
   LDA RDNMI ; PpuStatus_2002
   AND #$40
   BNE :-
-: LDX #$00
+  LDX #$00
 
 : INX
   BEQ :+

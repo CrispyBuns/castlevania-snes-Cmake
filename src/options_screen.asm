@@ -18,7 +18,7 @@ option_tiles:
 
 
 ; PRESS START
-.byte $64, $21, $0B, P6, $29, P6, $2b, P6, $1e, P6, $2c, P6, $2c, P6, $34, P6, $2c, P6, $2d, P6, $1a, P6, $2b, P6, $2d
+.byte $84, $21, $0B, P6, $29, P6, $2b, P6, $1e, P6, $2c, P6, $2c, P6, $34, P6, $2c, P6, $2d, P6, $1a, P6, $2b, P6, $2d
 
 ; PRESS SELECT FOR MSU-1 OPTIONS
 .addr $2277
@@ -48,15 +48,26 @@ P2_3 = $1A
 P3_3 = $1E
 
 ; fun 8 x 8 BG
-.byte $6C, $22, $08, P0, $9A, P0, $6D, P0, $6D, P0, $6D, P0, $6D, P0, $6D, P0, $6D, P0, $6A
-.byte $8C, $22, $08, P0, $8D, P0, $9D, P0, $6A, P0, $7A, P0, $8A, P0, $6D, P0, $6D, P0, $7D
-.byte $AC, $22, $08, P0, $8E, P0, $9E, P0, $6B, P0, $7B, P0, $8B, P0, $9B, P0, $6E, P0, $7E
-.byte $CC, $22, $08, P0, $8F, P0, $9F, P0, $6C, P0, $7C, P0, $8C, P0, $9C, P0, $6F, P0, $7F
-.byte $EC, $22, $08, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40
-.byte $0C, $23, $08, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40
+; .byte $6C, $22, $08, P0, $9A, P0, $6D, P0, $6D, P0, $6D, P0, $6D, P0, $6D, P0, $6D, P0, $6A
+; .byte $8C, $22, $08, P0, $8D, P0, $9D, P0, $6A, P0, $7A, P0, $8A, P0, $6D, P0, $6D, P0, $7D
+; .byte $AC, $22, $08, P0, $8E, P0, $9E, P0, $6B, P0, $7B, P0, $8B, P0, $9B, P0, $6E, P0, $7E
+; .byte $CC, $22, $08, P0, $8F, P0, $9F, P0, $6C, P0, $7C, P0, $8C, P0, $9C, P0, $6F, P0, $7F
+; .byte $EC, $22, $08, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40
+; .byte $0C, $23, $08, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40, P0, $40
+; .byte $2C, $23, $08, P3, $42, P3, $51, P3, $51, P3, $51, P3, $51, P3, $51, P3, $51, P3, $52 
+; .byte $4C, $23, $08, P3, $46, P3, $56, P3, $46, P3, $56, P3, $46, P3, $56, P3, $46, P3, $56
 
-.byte $2C, $23, $08, P3, $42, P3, $51, P3, $51, P3, $51, P3, $51, P3, $51, P3, $51, P3, $52 
-.byte $4C, $23, $08, P3, $46, P3, $56, P3, $46, P3, $56, P3, $46, P3, $56, P3, $46, P3, $56
+OFFSET = $40
+OF = OFFSET
+
+.byte $6C, $22, $08, $00, $09 + OF, $00, $07 + OF, $08, $06 + OF, $08, $08 + OF, $08, $06 + OF, $08, $08 + OF, $00, $04 + OF, $00, $25 + OF
+.byte $8C, $22, $08, $00, $09 + OF, $00, $04 + OF, $08, $0A + OF, $08, $0B + OF, $08, $0A + OF, $08, $0B + OF, $00, $04 + OF, $00, $23 + OF
+.byte $AC, $22, $08, $00, $07 + OF, $00, $09 + OF, $08, $06 + OF, $08, $08 + OF, $08, $06 + OF, $08, $08 + OF, $00, $23 + OF, $00, $1C + OF
+.byte $CC, $22, $08, $00, $05 + OF, $00, $07 + OF, $08, $0A + OF, $08, $0B + OF, $08, $0A + OF, $08, $0B + OF, $00, $22 + OF, $00, $1C + OF
+.byte $EC, $22, $08, $00, $07 + OF, $00, $07 + OF, $00, $26 + OF, $00, $04 + OF, $00, $07 + OF, $00, $07 + OF, $00, $26 + OF, $00, $04 + OF
+.byte $0C, $23, $08, $00, $05 + OF, $00, $04 + OF, $00, $05 + OF, $00, $09 + OF, $00, $05 + OF, $00, $04 + OF, $00, $05 + OF, $00, $09 + OF
+.byte $2C, $23, $08, $00, $6A + OF, $00, $6B + OF, $00, $6A + OF, $00, $6B + OF, $00, $6A + OF, $00, $6B + OF, $00, $6A + OF, $00, $6B + OF
+.byte $4C, $23, $08, $00, $66 + OF, $00, $69 + OF, $00, $66 + OF, $00, $69 + OF, $00, $66 + OF, $00, $69 + OF, $00, $66 + OF, $00, $69 + OF
 
 ; full palette preview
 .byte $A3, $21, $10, P0_3, $00, P0_3, $01, P0_3, $02, P0_3, $03, P0_3, $04, P0_3, $05, P0_3, $06, P0_3, $07, P0_3, $08, P0_3, $09, P0_3, $0A, P0_3, $0B, P0_3, $0C, P0_3, $0D, P0_3, $0E, P0_3, $0F
@@ -94,6 +105,7 @@ show_options_screen:
     STA INIDISP
     jslb clearvm_jsl, $a0
 
+; load default tile stuff, we'll overwrite some of it
     LDA #$00
     STA CHR_BANK_BANK_TO_LOAD
     LDA #$00
@@ -106,6 +118,10 @@ show_options_screen:
     STA CHR_BANK_TARGET_BANK
     JSL load_chr_table_to_vm
 
+; load sprite tiles from $298000 - 
+    JSR load_8_bit_tiles
+
+    
 ;     ; if MSU starts here at 0 then it's not available at all
 ;     LDA MSU_SELECTED
 ;     BNE :+
@@ -424,13 +440,21 @@ option_5_side_effects:
     jslb msu_check, $B2
     rts
 
+option_8_side_effects:
+    ; reload tiles
+    LDA RDNMI
+    : LDA RDNMI
+    BPL :-
+
+    JSR load_8_bit_tiles
+
+    rts
+
 option_1_side_effects:
 option_2_side_effects: 
 option_3_side_effects:
 option_6_side_effects:
 option_7_side_effects:
-option_8_side_effects:
-option_9_side_effects:
     rts
 
 
@@ -472,5 +496,96 @@ single_color_tiles:
 .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
 .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
 .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
+
+; for sprites we need tiles from rows
+; 0, 2, 5, and 8 we'll skip the others to avoid loading too much
+sprite_rows_to_load:
+.byte $00, $02, $05, $08, $06, $FF
+
+
+
+load_8_bit_tiles:
+
+    LDA #$80
+    STA VMAIN
+
+    LDA #$0B
+    STA VMADDH
+    STZ VMADDL
+    
+    LDY #$FF
+
+:   INY
+    LDA sprite_rows_to_load, Y
+    CMP #$FF
+    BEQ :+++
+
+    ASL
+    CLC
+    ADC #$A0
+    STA A1T1H
+
+    LDA #$00
+    STA A1T1L
+
+    LDA OPTIONS_16BIT_TILES
+    BEQ :+
+    LDA #$19
+    BRA :++
+:
+        LDA #$29
+:
+    STA A1B1
+
+    LDA #$01
+    STA DMAP1
+
+    LDA #$18
+    STA BBAD1
+
+    LDA #$02
+    STA DAS1H
+    STZ DAS1L
+       
+    LDA #$02
+    STA MDMAEN
+
+    BRA :---
+
+:
+
+; bg tiles go from 400 - AFF, I could copy less but I'm lazy
+LDA #$04
+STA VMADDH
+STZ VMADDL
+
+LDA #$C0
+STA A1T1H
+
+LDA #$00
+STA A1T1L
+
+LDA #$01
+STA DMAP1
+
+LDA #$18
+STA BBAD1
+
+LDA OPTIONS_16BIT_TILES
+BEQ :+
+    LDA #$19
+    BRA :++
+:
+LDA #$29
+:
+STA A1B1
+
+LDA #$0D
+STA DAS1H
+STZ DAS1L
+
+STZ VMAIN
+
+rts
 
 .include "msu1-credits.asm"

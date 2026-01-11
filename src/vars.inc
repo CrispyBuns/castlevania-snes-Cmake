@@ -11,7 +11,8 @@ NUM_SCANLINES = 240 ; overscan on
 ; for each game.  They will almost always be in the zero page, or close to it.
 HOFS_LB             = $FD   ; BG H Scroll position [x] updated
 VOFS_LB             = $FC   ; BG V Scroll position [x] updated
-
+LEVEL_INDEX         = $28
+PREV_LEVEL_INDEX    = $29
 PPU_CONTROL_STATE   = $FF   ; Current state of the PPU Control register [x] updated
 PPU_MASK_STATE      = $FE   ;needs updating  ; Current state of the PPU Mask register
 ACTIVE_NES_BANK     = $24   ; Current bank loaded into the 8000-BFFF bank (for UNROM and MMC1)
@@ -62,13 +63,15 @@ QOL_SETTINGS        = $084D
 OPTIONS_START_ADDR   = $0860
 ; which options are stored at which address
 OPTIONS_PALETTE         = OPTIONS_START_ADDR
-OPTIONS_DIFFICULTY           = OPTIONS_START_ADDR + 1
+OPTIONS_DIFFICULTY      = OPTIONS_START_ADDR + 1
 OPTIONS_LOOP            = OPTIONS_START_ADDR + 2
 OPTIONS_SUB_WEAPON_SWAP = OPTIONS_START_ADDR + 3
-OPTIONS_MSU_SELECTED     = OPTIONS_START_ADDR + 4
+OPTIONS_MSU_SELECTED    = OPTIONS_START_ADDR + 4
 OPTIONS_MSU_PLAYLIST    = OPTIONS_START_ADDR + 5
 OPTIONS_DISABLE_RUMBLE  = OPTIONS_START_ADDR + 6
 OPTIONS_CONTROLS        = OPTIONS_START_ADDR + 7
+OPTIONS_16BIT_TILES     = OPTIONS_START_ADDR + 8
+TMP_CURR_LOADED_EXTENDED_PALETTE = OPTIONS_START_ADDR + 9
 
 DIFFICULTY_NORMAL = 0
 DIFFICULTY_HARD = 1

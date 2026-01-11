@@ -120,9 +120,20 @@ write_tiles:
     LDA #$80
     STA VMAIN
 
+    LDA OPTIONS_16BIT_TILES
+    BEQ original_tiles
+
     LDA PREV_NES_BANK
     CLC
-    ADC #$A8
+    ADC #$18 ; needs to be #$18 for 16 bit tiles
+    BRA set_bank
+
+  original_tiles:
+    LDA PREV_NES_BANK
+    CLC
+    ADC #$A8 ; needs to be #$18 for 16 bit tiles
+
+  set_bank:
     STA A1B6
 
     ; address needs to be:
@@ -190,6 +201,9 @@ write_tiles:
 
     LDA VMAIN_STATE
     STA VMAIN
+
+    ; now that we've written the tiles, we need to write the proper SNES palette
+    jslb load_palette_for_level_long, $a0
 
     rtl
 
@@ -448,3 +462,11 @@ redraw_multiplier:
     STA VMDATAL
     setAXY8
     rtl
+
+
+setup_ending_rewrite:
+    LDA #$0F
+    STA SYSTEM_STATE
+
+    jslb load_palette_for_level_long, $a0
+    JML $A7C373

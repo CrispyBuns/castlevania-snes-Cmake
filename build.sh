@@ -4,9 +4,9 @@ export GAME=Castlevania
 set -e
 
 # Use generate_options_asm.go to create the options screen
-go run utilities/generate_options_asm.go
-mv options.bin ./src/options.bin
-mv options_macro_defs.asm ./src/options_macro_defs.asm
+# go run utilities/generate_options_asm.go
+# mv options.bin ./src/options.bin
+# mv options_macro_defs.asm ./src/options_macro_defs.asm
 
 go run utilities/generate_tilemaps.go
 mv pause-bg2.bin ./src/pause-bg2.bin

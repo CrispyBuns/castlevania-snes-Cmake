@@ -431,63 +431,6 @@ new_data_bank:
   PLB
   RTL
 
-bankswitch_obj_chr_data:
-  ; this is a hack that happens to work most of the time.
-  PHB
-  LDA #$A0
-  PHA
-  PLB
-
-  LDY #$00
-: LDA CHR_BANK_LOADED_TABLE, y
-  CMP CHR_BANK_BANK_TO_LOAD
-  BEQ switch_to_y
-  CPY #$06
-  BEQ new_obj_bank
-  INY
-  INY
-  BRA :-
-
-new_obj_bank:
-  ; todo load the bank into 0000, 4000, or 6000
-  LDA INIDISP_STATE
-  ORA #$80
-  STA INIDISP
-
-  LDA CHR_BANK_BANK_TO_LOAD
-  TAY
-  LDA target_obj_banks, Y
-  STA CHR_BANK_TARGET_BANK
-  PHA
-  jslb load_chr_table_to_vm, $a0
-
-; sometimes there's additional logic.  for Super Dodgeball
-; banks 0a - 19 always loaded with 17
-;
-; this is between 0A and 19, so we load 17 too
-;   LDA #$17
-;   STA CHR_BANK_BANK_TO_LOAD
-;   LDA #$04
-;   STA CHR_BANK_TARGET_BANK
-;   jsl load_chr_table_to_vm
-
-; : 
-  LDA INIDISP_STATE
-  STA INIDISP
-  PLA
-  TAY
-  bra switch_to_y
-
-switch_to_y:
-  ; our target bank is loaded at #$y000
-  ; so just update our obj definition to use that for sprites
-  TYA
-  LSR ; for updating obsel, we have to halve y.  
-  STA OBSEL
-  PLB
-  RTL
-
-
 load_chr_table_to_vm:
   LDA CHR_BANK_TARGET_BANK
   TAY

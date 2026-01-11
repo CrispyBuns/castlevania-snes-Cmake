@@ -1,4 +1,4 @@
-NUM_OPTIONS = 8
+NUM_OPTIONS = 9
 
 
 ; Toggle current option
@@ -37,6 +37,10 @@ toggle_current_option:
     CMP #7
     BNE :+
     JMP increment_controls
+:
+    CMP #8
+    BNE :+
+    JMP increment_graphics
 :
 RTS
 
@@ -78,6 +82,10 @@ decrement_current_option:
     BNE :+
     JMP decrement_controls
 :
+    CMP #8
+    BNE :+
+    JMP decrement_graphics
+:
 RTS
 
 initialize_options:
@@ -89,6 +97,7 @@ initialize_options:
    jsr update_playlist
    jsr update_rumble
    jsr update_controls
+   jsr update_graphics
     rts
 
 option_palette_choice_tiles:
@@ -580,6 +589,65 @@ update_controls:
 	jsr option_7_side_effects
 	rts
 
+option_graphics_choice_tiles:
+.byte $18, $34, $18, $34, $18, $34, $18, $34, $18, $28, $18, $2B, $18, $22, $18, $20, $18, $22, $18, $27, $18, $1A, $18, $25, $18, $34, $18, $34, $18, $34, $18, $34
+.byte $18, $34, $18, $34, $18, $34, $18, $34, $18, $34, $18, $11, $18, $16, $18, $36, $18, $1B, $18, $22, $18, $2D, $18, $34, $18, $34, $18, $34, $18, $34, $18, $34
+
+decrement_graphics:
+	dec $0868
+	BPL :+
+		LDA #2
+		DEC A
+		STA $0868
+	:
+	BRA update_graphics
+
+increment_graphics:
+	inc $0868
+	lda $0868
+ 	CMP #2
+	BNE :+	
+		LDA #$00
+	:
+	STA $0868
+	BRA update_graphics
+
+update_graphics:
+	LDA RDNMI
+:	LDA RDNMI
+	BPL :-
+
+	setAXY16
+	LDA $0868
+	AND #$00FF
+
+	ASL
+	ASL
+	ASL
+	ASL
+	ASL
+	TAY
+
+	LDA #$21
+	XBA
+	ORA #$6C
+	STA VMADDL
+	setA8
+
+	LDX #$0000
+:	LDA option_graphics_choice_tiles, Y
+	STA VMDATAH
+	LDA option_graphics_choice_tiles + 1, Y
+	STA VMDATAL
+	INX
+	INY
+	INY
+	CPX #$0010
+	BNE :-
+	setAXY8
+	jsr option_8_side_effects
+	rts
+
 
 
 ; Which Option are we on sprites
@@ -592,20 +660,39 @@ option_sprite_y_pos:
 .byte $3F
 .byte $47
 .byte $4F
+.byte $57
 ; X, Y, Tile, attributes
 options_sprites:
 .byte  $04, $17, $3B, $42   ; Option Selection
 
-	.byte 120, 184, $B0, $40 ; tank sprite 1/6
-	.byte 128, 184, $A0, $40 ; tank sprite 2/6
-	.byte 136, 184, $A5, $20 ; tank sprite 3/6
-	.byte 120, 192, $C0, $20 ; tank sprite 4/6
-	.byte 128, 192, $E0, $20 ; tank sprite 5/6
-	.byte 136, 192, $D0, $20 ; tank sprite 6/6
+SPRITE_X = 112
+SPRITE_Y = 168
 
-	.byte 104, 184, $e2, $22 ; Enemy Sprite x/4
-	.byte  96, 184, $e1, $22 ; Enemy Sprite x/4
-	.byte 104, 192, $e4, $22 ; Enemy Sprite x/4
-	.byte  96, 192, $e3, $22 ; Enemy Sprite x/4
+.byte SPRITE_X		, SPRITE_Y		, $CA, $60 ; left head
+.byte SPRITE_X + 8	, SPRITE_Y		, $C8, $60 ; right head
+.byte SPRITE_X		, SPRITE_Y + 8	, $CB, $60 ; left body
+.byte SPRITE_X + 8	, SPRITE_Y + 8	, $C9, $60 ; right body
+.byte SPRITE_X		, SPRITE_Y + 16	, $B8, $60 ; left leg
+.byte SPRITE_X + 8	, SPRITE_Y + 16	, $B6, $60 ; right leg
+.byte SPRITE_X		, SPRITE_Y + 24	, $B9, $60 ; left foot
+.byte SPRITE_X + 8	, SPRITE_Y + 24	, $B7, $60 ; right foot
+
+.byte SPRITE_X+16, SPRITE_Y + 8		, $CD, $60 ; whip hand
+.byte SPRITE_X+20, SPRITE_Y + 8		, $FD, $60 ; whip chain
+.byte SPRITE_X+28, SPRITE_Y + 8		, $FD, $60 ; whip chain
+.byte SPRITE_X+36, SPRITE_Y + 8		, $FB, $60 ; whip tip
+
+.byte SPRITE_X + 32, SPRITE_Y		, $E0, $22 ; zombie
+.byte SPRITE_X + 40, SPRITE_Y		, $E2, $22 ; zombie
+.byte SPRITE_X + 32, SPRITE_Y + 8	, $E1, $22 ; zombie
+.byte SPRITE_X + 40, SPRITE_Y + 8	, $E3, $22 ; zombie
+.byte SPRITE_X + 32, SPRITE_Y + 16	, $E4, $22 ; zombie
+.byte SPRITE_X + 40, SPRITE_Y + 16	, $E6, $22 ; zombie
+.byte SPRITE_X + 32, SPRITE_Y + 24	, $E5, $22 ; zombie
+.byte SPRITE_X + 40, SPRITE_Y + 24	, $E7, $22 ; zombie
+
+.byte SPRITE_X - 12, SPRITE_Y - 8	, $D0, $26 ; candle
+.byte SPRITE_X - 12, SPRITE_Y		, $D1, $26 ; candle
+
 	.byte $FF
 	

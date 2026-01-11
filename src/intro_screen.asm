@@ -27,6 +27,12 @@ intro_screen_data:
 ; .byte $1A, $27, $1D, $34
 ; .byte $2B, $1E, $25, $22, $24, $24,  $ff
 
+; 16-Bit Tiles by Fiuke Bnuy
+.byte $62, $22, $11, $16, $36, $1B, $22, $2D, $00              ; 16-Bit
+.byte $2D, $22, $25, $1E, $2C, $00                                  ; TILES    
+.byte $1B, $32, $00                                                 ; BY
+.byte $1F, $22, $2E, $24, $1E, $00, $1B, $27, $2E, $32, $FF         ; FIUKE BNUY
+
 .byte $E1, $22, $12, $1a, $10, $13, $00                                 ; 2A03
 .byte $2c, $28, $2e, $27, $1d, $00                                      ; SOUND 
 .byte $1e, $26, $2e, $25, $1a, $2d, $28, $2b, $00                       ; EMULATOR

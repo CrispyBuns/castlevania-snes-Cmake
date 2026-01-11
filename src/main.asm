@@ -19,6 +19,11 @@
 .include "resetvector.asm"
 
 .segment "EMPTY_SPACE"
+.include "tile_bank0_16bit.asm"
+.include "tile_bank1_16bit.asm"
+.include "tile_bank2_16bit.asm"
+.include "tile_bank3_16bit.asm"
+.include "tile_bank6_16bit.asm"
 
 .include "bank-snes.asm"
 ; these would need to be created from the original ROM using 
