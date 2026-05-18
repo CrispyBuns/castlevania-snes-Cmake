@@ -1,121 +1,160 @@
-# --------------------------------------------------------------------
-# Rumbleminzie's SNES Castlevania Port - Makefile
-# --------------------------------------------------------------------
+# ========================================================================
+# Rumbleminzie's SNES Castlevania Port - Optimized Makefile
+# Supports: Linux, macOS, Termux, MSYS2
+# ========================================================================
 
-# Detect platform
+# ---- Platform Detection & Configuration ----
 UNAME_S := $(shell uname -s)
-IS_MSYS := $(findstring MINGW,$(UNAME_S))
-EXE_SUFFIX :=
-ifeq ($(IS_MSYS),MINGW)
-	EXE_SUFFIX := .exe
-endif
+EXE := $(if $(filter MINGW%,$(UNAME_S)),.exe)
+TIMESTAMP := $(shell date '+%Y%m%d%H%M%S')
 
-# Detecting executables (must be in PATH)
-CC65 := $(shell which cc65$(EXE_SUFFIX) 2>/dev/null)
-CA65 := $(shell which ca65$(EXE_SUFFIX) 2>/dev/null)
-LD65 := $(shell which ld65$(EXE_SUFFIX) 2>/dev/null)
-ASAR := $(shell which asar$(EXE_SUFFIX) 2>/dev/null)
-GO   := $(shell which go$(EXE_SUFFIX) 2>/dev/null)
-EMU  := $(shell which Mesen-S$(EXE_SUFFIX) 2>/dev/null || which higan$(EXE_SUFFIX) 2>/dev/null || which snes9x$(EXE_SUFFIX) 2>/dev/null)
-
-# Check required tools
-ifeq ($(CA65),)
-$(error "ca65 not found in PATH")
-endif
-ifeq ($(LD65),)
-$(error "ld65 not found in PATH")
-endif
-ifeq ($(GO),)
-$(error "go not found in PATH")
-endif
-
-# Project variables
+# ---- Project Layout ----
 GAME := Castlevania
-OUTDIR := out
 SRCDIR := src
-TIMEROM := $(OUTDIR)/buildarchive
+OUTDIR := out
+ARCHDIR := $(OUTDIR)/buildarchive
+
+# ---- Tool Paths ----
+CA65 := ca65$(EXE)
+LD65 := ld65$(EXE)
+GO := go$(EXE)
+ASAR := asar$(EXE)
+
+# Emulator discovery (prioritized)
+EMU := $(or $(shell command -v Mesen-S$(EXE) 2>/dev/null),\
+            $(shell command -v higan$(EXE) 2>/dev/null),\
+            $(shell command -v snes9x$(EXE) 2>/dev/null))
+
+# ---- Generated Files ----
+GEN_FILES := $(SRCDIR)/options.bin \
+             $(SRCDIR)/options_macro_defs.asm \
+             $(SRCDIR)/pause-bg2.bin \
+             $(SRCDIR)/msu1-credits.bin
+
 SPC_BIN := $(SRCDIR)/spc/spc.bin
+WRAM_BIN := $(SRCDIR)/wram_routines.bin
 
-.PHONY: all clean run archive extract_wram rebuild_wram spc
+# ---- Build Targets ----
+ROM := $(OUTDIR)/$(GAME).sfc
+OBJ := $(OUTDIR)/main.o
 
-# --------------------------------------------------------------------
-# Default target: full two-pass build + archive
-# --------------------------------------------------------------------
-all: spc $(OUTDIR)/$(GAME).sfc archive
+# ========================================================================
+# Targets
+# ========================================================================
 
-# Create output and archive directories
-$(OUTDIR):
-	mkdir -p $(OUTDIR)
-	mkdir -p $(TIMEROM)
+.PHONY: all clean run archive extract_wram rebuild_wram spc check-tools help
 
-# Generate options and macro defs via Go
-$(SRCDIR)/options.bin $(SRCDIR)/options_macro_defs.asm:
-	$(GO) run utilities/generate_options_asm.go
-	mv options.bin $(SRCDIR)/options.bin
-	mv options_macro_defs.asm $(SRCDIR)/options_macro_defs.asm
+all: $(ROM) archive
+	@echo "[OK] Build complete: $(ROM)"
 
-# Generate tilemaps via Go
-$(SRCDIR)/pause-bg2.bin $(SRCDIR)/msu1-credits.bin:
-	$(GO) run utilities/generate_tilemaps.go
-	mv pause-bg2.bin $(SRCDIR)/pause-bg2.bin
-	mv msu1-credits.bin $(SRCDIR)/msu1-credits.bin
+help:
+	@echo "Available targets:"
+	@echo "  all              - Build ROM and archive (default)"
+	@echo "  spc              - Build SPC audio binary"
+	@echo "  run              - Build and launch in emulator"
+	@echo "  extract_wram     - Extract WRAM routines from ROM"
+	@echo "  rebuild_wram     - Rebuild with extracted WRAM"
+	@echo "  archive          - Archive current ROM"
+	@echo "  check-tools      - Verify required tools"
+	@echo "  clean            - Remove all generated files"
 
-# Assemble SPC if asar is available
+check-tools:
+	@echo "Checking required tools..."
+	@command -v $(CA65) >/dev/null || (echo "ERROR: ca65 not found" && exit 1)
+	@command -v $(LD65) >/dev/null || (echo "ERROR: ld65 not found" && exit 1)
+	@command -v $(GO) >/dev/null || (echo "ERROR: go not found" && exit 1)
+	@echo "[OK] All required tools found"
+
+# ---- Directory Setup ----
+$(OUTDIR) $(ARCHDIR):
+	@mkdir -p $@
+
+# ---- Generate Files (Consolidated) ----
+$(SRCDIR)/options.bin $(SRCDIR)/options_macro_defs.asm: | $(OUTDIR)
+	@echo "Generating options..."
+	@$(GO) run utilities/generate_options_asm.go
+	@mv -f options.bin $(SRCDIR)/ && mv -f options_macro_defs.asm $(SRCDIR)/
+
+$(SRCDIR)/pause-bg2.bin $(SRCDIR)/msu1-credits.bin: | $(OUTDIR)
+	@echo "Generating tilemaps..."
+	@$(GO) run utilities/generate_tilemaps.go
+	@mv -f pause-bg2.bin $(SRCDIR)/ && mv -f msu1-credits.bin $(SRCDIR)/
+
+# ---- SPC Binary ----
 spc: $(SPC_BIN)
 
 $(SPC_BIN): $(SRCDIR)/spc/spc.asm
-ifeq ($(ASAR),)
-	@echo "asar not found in PATH, skipping SPC build"
-	@touch $(SPC_BIN)
-else
-	@echo "Building SPC binary..."
-	$(ASAR) $< $@
-	@echo "Built SPC binary: $@"
-endif
+	@if command -v $(ASAR) >/dev/null 2>&1; then \
+		echo "Building SPC..."; \
+		$(ASAR) $< $@; \
+		echo "[OK] Built: $@"; \
+	else \
+		echo "[SKIP] asar not found, skipping SPC build"; \
+		touch $@; \
+	fi
 
-# Ensure WRAM routines exist on first build
-$(SRCDIR)/wram_routines.bin:
-	@echo "Creating empty wram_routines.bin for first build"
-	touch $(SRCDIR)/wram_routines.bin
+# ---- WRAM Initialization ----
+$(WRAM_BIN):
+	@echo "Creating placeholder WRAM binary..."
+	@touch $@
 
-# Build main object
-$(OUTDIR)/main.o: $(SRCDIR)/main.asm $(SRCDIR)/options.bin $(SRCDIR)/pause-bg2.bin \
-                  $(SRCDIR)/msu1-credits.bin $(SRCDIR)/wram_routines.bin $(SPC_BIN) | $(OUTDIR)
-	$(CA65) $(SRCDIR)/main.asm -o $@ -g
+# ---- Main Assembly & Linking ----
+$(OBJ): $(SRCDIR)/main.asm $(GEN_FILES) $(WRAM_BIN) $(SPC_BIN) | $(OUTDIR)
+	@echo "Assembling..."
+	@$(CA65) $< -o $@ -g
 
-# Link ROM
-$(OUTDIR)/$(GAME).sfc: $(OUTDIR)/main.o | $(OUTDIR)
-	$(LD65) -C $(SRCDIR)/hirom.cfg -o $@ $(OUTDIR)/main.o
+$(ROM): $(OBJ) | $(OUTDIR)
+	@echo "Linking..."
+	@$(LD65) -C $(SRCDIR)/hirom.cfg -o $@ $<
+	@echo "[OK] ROM generated: $@"
 
-# Extract WRAM routines
-extract_wram: $(OUTDIR)/$(GAME).sfc
-	dd if=$(OUTDIR)/$(GAME).sfc of=$(SRCDIR)/wram_routines.bin bs=1 skip=$$((0x1800)) count=$$((0x800))
+# ---- WRAM Extraction & Rebuild ----
+extract_wram: $(ROM)
+	@echo "Extracting WRAM routines..."
+	@if command -v xxd >/dev/null 2>&1; then \
+		xxd -s 0x1800 -l 0x800 -r $(ROM) $(WRAM_BIN); \
+	else \
+		dd if=$(ROM) of=$(WRAM_BIN) bs=1 skip=6144 count=2048 2>/dev/null; \
+	fi
+	@echo "[OK] Extracted: $(WRAM_BIN)"
 
-# Rebuild with WRAM routines included
-rebuild_wram: extract_wram
-	$(CA65) $(SRCDIR)/main.asm -o $(OUTDIR)/main.o -g
-	$(LD65) -C $(SRCDIR)/hirom.cfg -o $(OUTDIR)/$(GAME).sfc $(OUTDIR)/main.o
+rebuild_wram: extract_wram $(OBJ)
+	@echo "Rebuilding ROM with WRAM..."
+	@$(LD65) -C $(SRCDIR)/hirom.cfg -o $(ROM) $(OBJ)
+	@echo "[OK] Rebuild complete: $(ROM)"
 
-# Archive with timestamp
-archive: $(OUTDIR)/$(GAME).sfc
-	mkdir -p $(TIMEROM)
-	@TIMESTAMP=$$(date '+%Y%m%d%H%M%S'); \
-	FILENAME="$(TIMEROM)/$(GAME)-$$TIMESTAMP.sfc"; \
-	cp $(OUTDIR)/$(GAME).sfc $$FILENAME; \
-	echo "Archived to: $$FILENAME"
+# ---- Archiving ----
+archive: $(ROM) | $(ARCHDIR)
+	@cp $(ROM) $(ARCHDIR)/$(GAME)-$(TIMESTAMP).sfc
+	@echo "[OK] Archived to: $(ARCHDIR)/$(GAME)-$(TIMESTAMP).sfc"
 
-# Run in emulator
+# ---- Run in Emulator ----
 run: all
-ifneq ($(EMU),)
-	@echo "Launching emulator: $(EMU)"
-	$(EMU) $(OUTDIR)/$(GAME).sfc
-else
-	@echo "No supported SNES emulator found in PATH."
-	@echo "Please install one of: Mesen-S (recommended), Higan, or Snes9x."
-endif
+	@if [ -n "$(EMU)" ]; then \
+		echo "Launching: $(EMU)"; \
+		$(EMU) $(ROM) &; \
+	else \
+		echo "Error: No SNES emulator found in PATH"; \
+		echo "Install one of: Mesen-S (recommended), Higan, or Snes9x"; \
+		exit 1; \
+	fi
 
-# Clean
+# ---- Cleanup ----
 clean:
-	rm -rf $(OUTDIR) $(SRCDIR)/options.bin $(SRCDIR)/options_macro_defs.asm \
-	       $(SRCDIR)/pause-bg2.bin $(SRCDIR)/msu1-credits.bin \
-	       $(SRCDIR)/wram_routines.bin $(SPC_BIN)
+	@echo "Cleaning..."
+	@rm -rf $(OUTDIR) $(GEN_FILES) $(WRAM_BIN) $(SPC_BIN)
+	@echo "[OK] Clean complete"
+
+# ========================================================================
+# Debug Targets (Optional - Remove if not needed)
+# ========================================================================
+
+.PHONY: info
+info:
+	@echo "Platform: $(UNAME_S)"
+	@echo "CA65: $$(command -v $(CA65) 2>/dev/null || echo 'not found')"
+	@echo "LD65: $$(command -v $(LD65) 2>/dev/null || echo 'not found')"
+	@echo "GO: $$(command -v $(GO) 2>/dev/null || echo 'not found')"
+	@echo "ASAR: $$(command -v $(ASAR) 2>/dev/null || echo 'not found')"
+	@echo "EMU: $$(echo $(EMU) | grep -o '[^/]*$$' || echo 'not found')"
+	@echo "Timestamp: $(TIMESTAMP)"
