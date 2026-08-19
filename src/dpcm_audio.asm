@@ -580,7 +580,10 @@ money_pickup:
   .incbin "sfx/17-money-pickup-11khz.brr"
 money_pickup_end:
 
-.SEGMENT "PRGB5"
+; hacky for now, this shouldn't be in the middle of sound stuff
+.include "bank4_16bit.asm"
+
+.SEGMENT "PRGB6"
 treasure:
   .incbin "sfx/23-treasure-8khz.brr"
 treasure_end:

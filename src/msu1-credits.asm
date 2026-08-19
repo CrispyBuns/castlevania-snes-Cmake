@@ -1,6 +1,6 @@
 show_credits:
-:  LDA RDNMI
-   LDA RDNMI
+:  LDA HVBJOY
+   LDA HVBJOY
    BPL :-
 
     LDA VMAIN_STATE
@@ -11,15 +11,15 @@ show_credits:
     jslb clear_bg_jsl, $a0
     jsr write_credits_tiles
     
-    LDA #$01
+    LDA #$02
     STA TM
 
     LDA #$0F
     STA INIDISP
 
 credits_input_loop:
-    LDA RDNMI
-:   LDA RDNMI
+    LDA HVBJOY
+:   LDA HVBJOY
     BPL :-
 
     jslb msu_nmi_check, $b2

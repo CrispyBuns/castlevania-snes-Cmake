@@ -384,6 +384,7 @@ input_additions:
     PLA
     AND button_configs_swap, Y
     BEQ :+
+
         LDA OTHER_SUB_WEAPON_HELD
         BEQ :+
             PHA
@@ -416,6 +417,8 @@ redraw_multiplier:
   BEQ :+
     LDA $18
     CMP #$0E  ; we're in the 1 falling cutscene, don't do any drawing
+    BEQ :+
+    CMP #$0F  ; ending cutscene, don't do any drawing
     BEQ :+
     STZ MULTIPLIER_NEEDS_REDRAW
     LDA CURRENT_SUB_WEAPON_MULT

@@ -18,7 +18,7 @@ option_tiles:
 
 
 ; PRESS START
-.byte $84, $21, $0B, P6, $29, P6, $2b, P6, $1e, P6, $2c, P6, $2c, P6, $34, P6, $2c, P6, $2d, P6, $1a, P6, $2b, P6, $2d
+.byte $88, $23, $0B, P6, $29, P6, $2b, P6, $1e, P6, $2c, P6, $2c, P6, $34, P6, $2c, P6, $2d, P6, $1a, P6, $2b, P6, $2d
 
 ; PRESS SELECT FOR MSU-1 OPTIONS
 .addr $2277
@@ -127,6 +127,10 @@ show_options_screen:
 ;     BNE :+
 ;     INC MSU_UNAVAILABLE
 ; :   
+
+    LDA #$80
+    STA INIDISP
+
     JSR write_option_tiles
     jslb write_option_palette, $a0
     jslb write_option_palette_from_indexes, $a0
@@ -145,6 +149,14 @@ show_options_screen:
         SBC #$05
     :
     STA OPTIONS_MSU_PLAYLIST
+
+
+    LDA #$01
+    STA OPTIONS_16BIT_TILES
+    STA OPTIONS_MSU_SELECTED
+    LDA #$02
+    STA OPTIONS_DIFFICULTY
+
 
     jsr initialize_options
     jslb dma_oam_table_long, $a0
@@ -397,6 +409,7 @@ write_single_color_tiles_to_3000:
 
 ; override these if changing an option needs to have side efffects
 option_0_side_effects:
+
     jslb write_option_palette_from_indexes, $a0
     jslb write_option_palette, $a0
         PHK
@@ -448,6 +461,14 @@ option_8_side_effects:
 
     JSR load_8_bit_tiles
 
+    LDA OPTIONS_16BIT_TILES
+    BEQ :+
+        ; 16 bit tiles, re-set palette to NES
+        STZ OPTIONS_PALETTE
+        jsr update_palette
+
+    :
+
     rts
 
 option_1_side_effects:
@@ -455,6 +476,7 @@ option_2_side_effects:
 option_3_side_effects:
 option_6_side_effects:
 option_7_side_effects:
+option_9_side_effects:
     rts
 
 
@@ -507,6 +529,9 @@ sprite_rows_to_load:
 load_8_bit_tiles:
 
     LDA #$80
+    STA INIDISP
+
+    LDA #$80
     STA VMAIN
 
     LDA #$0B
@@ -555,7 +580,7 @@ load_8_bit_tiles:
 :
 
 ; bg tiles go from 400 - AFF, I could copy less but I'm lazy
-LDA #$04
+LDA #$14
 STA VMADDH
 STZ VMADDL
 
@@ -580,12 +605,59 @@ LDA #$29
 :
 STA A1B1
 
-LDA #$0D
+LDA #$0E
 STA DAS1H
 STZ DAS1L
+
+
+
+    LDA #$02
+    STA MDMAEN
+
+; :   LDA HVBJOY
+;     BPL :-
+
+    LDA #$0F
+    STA INIDISP
+
 
 STZ VMAIN
 
 rts
 
 .include "msu1-credits.asm"
+
+options_sprites:
+.byte  $04, $17, $3B, $42   ; Option Selection
+
+SPRITE_X = 112
+SPRITE_Y = 168
+
+.byte SPRITE_X		, SPRITE_Y		, $CA, $60 ; left head
+.byte SPRITE_X + 8	, SPRITE_Y		, $C8, $60 ; right head
+.byte SPRITE_X		, SPRITE_Y + 8	, $CB, $60 ; left body
+.byte SPRITE_X + 8	, SPRITE_Y + 8	, $C9, $60 ; right body
+.byte SPRITE_X		, SPRITE_Y + 16	, $B8, $60 ; left leg
+.byte SPRITE_X + 8	, SPRITE_Y + 16	, $B6, $60 ; right leg
+.byte SPRITE_X		, SPRITE_Y + 24	, $B9, $60 ; left foot
+.byte SPRITE_X + 8	, SPRITE_Y + 24	, $B7, $60 ; right foot
+
+.byte SPRITE_X+16, SPRITE_Y + 8		, $CD, $60 ; whip hand
+.byte SPRITE_X+20, SPRITE_Y + 8		, $FD, $60 ; whip chain
+.byte SPRITE_X+28, SPRITE_Y + 8		, $FD, $60 ; whip chain
+.byte SPRITE_X+36, SPRITE_Y + 8		, $FB, $60 ; whip tip
+
+.byte SPRITE_X + 32, SPRITE_Y		, $E0, $22 ; zombie
+.byte SPRITE_X + 40, SPRITE_Y		, $E2, $22 ; zombie
+.byte SPRITE_X + 32, SPRITE_Y + 8	, $E1, $22 ; zombie
+.byte SPRITE_X + 40, SPRITE_Y + 8	, $E3, $22 ; zombie
+.byte SPRITE_X + 32, SPRITE_Y + 16	, $E4, $22 ; zombie
+.byte SPRITE_X + 40, SPRITE_Y + 16	, $E6, $22 ; zombie
+.byte SPRITE_X + 32, SPRITE_Y + 24	, $E5, $22 ; zombie
+.byte SPRITE_X + 40, SPRITE_Y + 24	, $E7, $22 ; zombie
+
+.byte SPRITE_X - 12, SPRITE_Y - 8	, $D0, $26 ; candle
+.byte SPRITE_X - 12, SPRITE_Y		, $D1, $26 ; candle
+
+	.byte $FF
+	
