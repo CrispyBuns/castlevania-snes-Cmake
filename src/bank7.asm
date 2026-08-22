@@ -241,8 +241,19 @@
     jsr set_subweapon_on_death
     nops 4
 
-.byte $20, $EA, $C9, $A9
-.byte $00, $85, $19, $A9, $05, $85, $18, $85, $1F, $4C, $8A, $C9, $20, $0D, $C1, $A9
+.byte $20, $EA, $C9
+
+
+; LDA #$00
+; STA $19
+; LDA #$05
+; STA $18
+; STA $1F
+jslb setup_level_load_palette_swaps, $a0
+nops 6
+JMP $C98A
+
+.byte $20, $0D, $C1, $A9
 .byte $F4, $8D, $0C, $02, $A9, $FE, $8D, $0D, $02, $A9, $0C, $20, $95, $CC, $A9, $06
 .byte $20, $95, $CC, $A9, $05, $20, $95, $CC, $A9, $2C, $20, $95, $CC, $A9, $00, $85
 .byte $FD, $85, $19, $8D, $F1, $07, $A9, $0D, $85, $18, $A5, $FF, $29, $FE, $85, $FF

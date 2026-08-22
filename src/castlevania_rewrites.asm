@@ -473,3 +473,22 @@ setup_ending_rewrite:
 
     jslb load_palette_for_level_long, $a0
     JML $A7C373
+
+; replaces C31F
+setup_level_load_palette_swaps:
+  LDA #$00
+  STA $19
+  LDA #$05
+  STA $18
+  STA $1F
+
+  PHA
+  LDA LEVEL_INDEX
+  CMP #$0A
+  BNE :+
+    jslb disable_nmi_and_fblank_no_store, $a0
+    jslb load_palette_for_level_long, $a0
+    jslb reset_inidisp, $a0
+  :
+  PLA
+  RTL

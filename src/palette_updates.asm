@@ -115,6 +115,7 @@ skip_writing_four_empties:
 
   LDA ACTIVE_NES_BANK
   INC A
+  
   CMP #$05 ; special rule for bank 5
   BNE :+
     ORA OPTIONS_16BIT_TILES
@@ -218,10 +219,17 @@ load_palette_for_level:
   ; this ensures we load the right palette for the first screen after the map
   LDA SYSTEM_STATE
   CMP #$0C
-  BNE :+
+  BEQ :+    
+    CMP #$05 ; falling
+    BEQ load_per_level_palette
+  :
     LDA PREV_LEVEL_INDEX
+    CMP #$0A
+    ; lvl 10 is special, and we dont want to update it just yet.
+    BEQ not_new_level
     CMP LEVEL_INDEX
     BEQ load_per_level_palette
+  not_new_level:
     BRA load_per_system_state_palette
 :
   CMP #$04
