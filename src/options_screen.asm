@@ -150,11 +150,11 @@ show_options_screen:
     :
     STA OPTIONS_MSU_PLAYLIST
 
-
+    STZ OPTIONS_MSU_SELECTED
     LDA #$01
     STA OPTIONS_16BIT_TILES
-    STA OPTIONS_MSU_SELECTED
-    LDA #$02
+    
+    LDA #$00
     STA OPTIONS_DIFFICULTY
 
 
@@ -660,4 +660,17 @@ SPRITE_Y = 168
 .byte SPRITE_X - 12, SPRITE_Y		, $D1, $26 ; candle
 
 	.byte $FF
-	
+
+; Which Option are we on sprites
+option_sprite_y_pos:
+.byte $17
+.byte $1F
+.byte $27
+.byte $2F
+.byte $37
+.byte $3F
+.byte $47
+.byte $4F
+.byte $57
+.byte $5F
+; X, Y, Tile, attributes

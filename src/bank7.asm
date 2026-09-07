@@ -244,14 +244,16 @@
 .byte $20, $EA, $C9
 
 
-; LDA #$00
-; STA $19
-; LDA #$05
-; STA $18
-; STA $1F
-jslb setup_level_load_palette_swaps, $a0
-nops 6
-JMP $C98A
+; -------sub start--------
+; C31F
+;  LDA #$00
+;  STA $19
+;  LDA #$05
+;  STA $18
+;  STA $1F
+ jslb setup_level_load_palette_swaps, $a0
+ nops 6
+ JMP $C98A
 
 .byte $20, $0D, $C1, $A9
 .byte $F4, $8D, $0C, $02, $A9, $FE, $8D, $0D, $02, $A9, $0C, $20, $95, $CC, $A9, $06
@@ -553,8 +555,8 @@ NOP
 
 ; CC00 - bank 7
 .byte $CC, $21, $CC, $D4, $80, $00, $D4, $80, $00, $D4, $80, $00, $D4, $80, $00, $D4
-.byte $80, $00, $D4, $80, $00, $D4, $C0, $00, $D4, $08, $FF, $D4, $08, $FF, $D4, $30
-.byte $FF, $D9, $2A, $CC, $21, $CC, $21, $CC, $21, $CC, $D4, $40, $00, $D4, $80, $00
+.byte $80, $00, $D4, $80, $00, $D4, $C0, $00, $D4, $08, $FF, $D4, $08, $FF, $D4, $30 ; $FF, $D4, $30
+.byte $FF, $D9, $2A, $CC, $21, $CC, $21, $CC, $21, $CC, $D4, $40, $00, $D4, $80, $00 ; $FF,
 .byte $D4, $80, $00, $D4, $80, $00, $D4, $80, $00, $D4, $C0, $00, $D9, $A5, $2A, $85
 .byte $4B, $F0, $02, $C6, $4B, $A9, $63, $C5, $4B, $90, $02, $A5, $4B, $20, $33, $A3
 .byte $85, $08, $A9, $18, $20, $95, $CC, $A5, $08, $20, $68, $CC, $4C, $5F, $CC, $A9
@@ -1517,12 +1519,31 @@ jsr set_ppu_control ; STA PpuControl_2000
 .byte $18, $65, $0F, $85, $16, $A9, $00, $85, $17, $A6, $28, $BD, $D6, $FB, $18, $65
 .byte $13, $4C, $72, $F9, $A9, $00, $85, $4C, $BD, $00, $07, $38, $E9, $60, $C9, $0C
 .byte $B0, $0F, $A9, $40, $85, $4C, $BD, $00, $07, $C9, $66, $D0, $04, $A9, $80, $85
-.byte $4C, $06, $4C, $26, $04, $06, $4C, $26, $04, $60, $0A, $83, $0A, $83, $0A, $83
+.byte $4C, $06, $4C, $26, $04, $06, $4C, $26, $04, $60
+
+; f9fa
+.addr level_1_tile_groups ; $830A ; Stage 0
+.addr level_1_tile_groups ; $830A ; Stage 1
+.addr level_1_tile_groups ; $830A ; Stage 2
+.addr level_1_tile_groups ; $830A ; Stage 3
+.addr $8B25 ; Stage 4
+.addr $8B25 ; Stage 5
+.addr $8B25 ; Stage 6
+.addr $9156 ; Stage 7
+.addr $9156 ; Stage 8
+.addr $9156 ; Stage 9
+.addr $975B ; Stage 10
+.addr $975B ; Stage 11
+.addr $975B ; Stage 12
+.addr $9ED1 ; Stage 13
+.addr $9ED1 ; Stage 14
+.addr $9ED1 ; Stage 15
+.addr $A537 ; Stage 16
+.addr $A537 ; Stage 17
+.addr $A9F4 ; Stage 18
 
 
-; FA00 - bank 7
-.byte $0A, $83, $25, $8B, $25, $8B, $25, $8B, $56, $91, $56, $91, $56, $91, $5B, $97
-.byte $5B, $97, $5B, $97, $D1, $9E, $D1, $9E, $D1, $9E, $37, $A5, $37, $A5, $F4, $A9
+; FA20 - bank 7
 .byte $0A, $83, $5A, $AD, $FA, $B0, $A5, $71, $F0, $29, $AE, $5B, $01, $F0, $24, $AD
 .byte $5C, $01, $D0, $1F, $8A, $38, $E9, $08, $48, $A8, $B9, $62, $FA, $D0, $07, $8A
 .byte $38, $E9, $08, $20, $5F, $DA, $68, $C9, $02, $D0, $0A, $8D, $5C, $01, $A9, $0F
@@ -1542,9 +1563,30 @@ jsr set_ppu_control ; STA PpuControl_2000
 ; FB00 - bank 7
 .byte $29, $03, $8D, $38, $03, $60, $A5, $5B, $A2, $14, $C9, $80, $F0, $10, $C9, $40
 .byte $D0, $F3, $A9, $1C, $20, $A7, $C1, $A0, $05, $20, $D6, $C1, $A2, $15, $8A, $4C
-.byte $95, $CC, $60, $00, $80, $02, $80, $04, $80, $08, $80, $49, $88, $4D, $88, $51
-.byte $88, $BC, $8D, $C0, $8D, $C4, $8D, $53, $94, $57, $94, $59, $94, $35, $9B, $39
-.byte $9B, $3D, $9B, $01, $A2, $03, $A2, $00, $A9, $E0, $AC, $E0, $AC, $68, $B0, $2A
+.byte $95, $CC, $60
+
+; stage layout starting addresses
+ .addr stage_0_ptr ; $8000 ; Stage 0 - outside castle
+ .addr stage_1_ptr ; $8002 ; Stage 1 - 
+ .addr stage_2_ptr ; $8004 ; Stage 2 - 
+ .addr stage_3_ptr ; $8008 ; Stage 3 - 
+ .addr $8849 ; Stage 4 - 
+ .addr $884D ; Stage 5 - 
+ .addr $8851 ; Stage 6 - 
+ .addr $8DBC ; Stage 7 - 
+ .addr $8DC0 ; Stage 8 - 
+ .addr $8DC4 ; Stage 9 - 
+ .addr $9453 ; Stage 10 - 
+ .addr $9457 ; Stage 11 - 
+ .addr $9459 ; Stage 12 - 
+ .addr $9B35 ; Stage 13 - 
+ .addr $9B39 ; Stage 14 - 
+ .addr $9B3D ; Stage 15 - 
+ .addr $A201 ; Stage 16 - 
+ .addr $A203 ; Stage 17 - 
+ .addr $A900 ; Stage 18 - 
+
+.byte $E0, $AC, $E0, $AC, $68, $B0, $2A
 .byte $2A, $2A, $2A, $2D, $2D, $2D, $30, $30, $30, $39, $2D, $2D, $36, $36, $36, $33
 .byte $33, $3C, $00, $40, $40, $40, $40, $40, $60, $71, $50, $41, $41, $90, $41, $91
 .byte $91, $90, $51, $51, $61, $00, $00, $25, $1F, $25, $1F, $25, $1F, $40, $78, $21

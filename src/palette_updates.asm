@@ -218,15 +218,15 @@ load_palette_for_level:
   ; if so load per level palette, otherwise load map palette
   ; this ensures we load the right palette for the first screen after the map
   LDA SYSTEM_STATE
-  CMP #$0C
-  BEQ :+    
     CMP #$05 ; falling
     BEQ load_per_level_palette
-  :
+  CMP #$0C
+  BNE :+    
     LDA PREV_LEVEL_INDEX
     CMP #$0A
     ; lvl 10 is special, and we dont want to update it just yet.
     BEQ not_new_level
+
     CMP LEVEL_INDEX
     BEQ load_per_level_palette
   not_new_level:
@@ -363,26 +363,26 @@ palette_1:
 
 ; level 1 - 4 
 palette_2:
-.incbin "./16bit-tiles/bg_16bit_palette_02.bin"
+.incbin "./level-layouts/level-1/palette.bin"
 
 ; level 5 - 7
 palette_3:
-.incbin "./16bit-tiles/bg_16bit_palette_03.bin"
+.incbin "./level-layouts/level-2/palette.bin"
 
 palette_4:
-.incbin "./16bit-tiles/bg_16bit_palette_04.bin"
+.incbin "./level-layouts/level-3/palette.bin"
 
 palette_5:
-.incbin "./16bit-tiles/bg_16bit_palette_05.bin"
+.incbin "./level-layouts/level-4/palette.bin"
 
 palette_6:
-.incbin "./16bit-tiles/bg_16bit_palette_06.bin"
+.incbin "./level-layouts/level-5/palette.bin"
 
 palette_7:
-.incbin "./16bit-tiles/bg_16bit_palette_07.bin"
+.incbin "./level-layouts/level-6/palette.bin"
 
 palette_8:
-.incbin "./16bit-tiles/bg_16bit_palette_08.bin"
+.incbin "./level-layouts/dracula/palette.bin"
 
 palette_9:
 .incbin "./16bit-tiles/bg_16bit_palette_09.bin"

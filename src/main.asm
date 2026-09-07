@@ -19,6 +19,8 @@
 .include "resetvector.asm"
 
 .segment "EMPTY_SPACE"
+.include "meta_inf.asm"
+; .include "level-layouts/levels.asm"
 .include "tile_bank0_16bit.asm"
 .include "tile_bank1_16bit.asm"
 .include "tile_bank2_16bit.asm"
