@@ -64,6 +64,16 @@ Adlib OPL2 - MelonadeM
 
 PCM Packs have been arranged and leveled by Batty
 
+## 16 - Bit Tile Credits
+
+Sprite Porting by Fiuke Bnuy
+
+(Base) Title Screen - kya (Romhacking.net)
+(Base) Simon Belmont (SSBU) (NES-Style) - hansungkee (The Sprite Resource)
+Gigant Bat 2 - logan232 (The Sprite Resource)
+Some Tiles and Monsters - kya (Romhacking.net)
+most of the tiles - Castlevania (Java Version)
+
 ## Prerequisites
 
 * [cc65](https://www.cc65.org/) - the 65c816 compiler and linker
