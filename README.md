@@ -1,4 +1,4 @@
-## Castlevania SNES Port - V 1.2
+## Castlevania SNES Port - V 1.3
 
 This is a 1:1 port of the NES version of Castlevania, running on the SNES. It is utilizing FastROM/HiROM.
 
