@@ -1,6 +1,6 @@
 .segment "HEADER"
 ;      012345678901234567890
-.byte "CASTLEVANIA SNES REV1" ; ROM name, must be 21 chars
+.byte "CASTLEVANIA SNES REV3" ; ROM name, must be 21 chars
        
                 
 .segment "ROMSPEC"

@@ -115,6 +115,11 @@ skip_writing_four_empties:
 
   LDA ACTIVE_NES_BANK
   INC A
+  
+  CMP #$05 ; special rule for bank 5
+  BNE :+
+    ORA OPTIONS_16BIT_TILES
+  :
   ORA #$A0
   PHA
   PLB
@@ -149,24 +154,24 @@ zero_all_palette:
   RTS
 
 snes_default_bg_palette:
-.byte $00, $00, $FF, $7F, $7D, $12, $D6, $10, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $FF, $7F, $B5, $56, $29, $25, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $FF, $7F, $B5, $56, $29, $25, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $FF, $7F, $B5, $56, $29, $25, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+.byte $00, $00, $B5, $56, $8C, $31, $33, $01, $76, $19, $F6, $25, $DA, $36, $9F, $43
+.byte $94, $4A, $10, $3A, $09, $1D, $C6, $18, $44, $10, $CC, $10, $48, $08, $24, $04
+.byte $00, $00, $B5, $56, $D6, $10, $BF, $65, $0C, $00, $10, $00, $94, $10, $94, $4A
+.byte $10, $3A, $8C, $31, $EA, $18, $C8, $10, $46, $08, $AF, $31, $2D, $1D, $08, $00
+.byte $00, $00, $A0, $44, $07, $02, $21, $01, $80, $00, $C2, $00, $86, $11, $8E, $2A
+.byte $00, $20, $B5, $56, $94, $4A, $10, $3A, $8C, $31, $C8, $28, $46, $18, $04, $18
+.byte $00, $00, $FF, $7F, $1F, $3A, $D6, $10, $3F, $5F, $BF, $4A, $DA, $0C, $54, $46
+.byte $3D, $0D, $5B, $67, $D9, $0C, $6C, $00, $6F, $21, $1F, $3A, $D6, $10, $6C, $04
 
 snes_sprite_palatte:
-.byte $00, $00, $FF, $7F, $7D, $12, $D6, $10, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $FF, $7F, $B5, $56, $29, $25, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $FF, $7F, $B5, $56, $29, $25, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $FF, $7F, $B5, $56, $29, $25, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+.byte $00, $00, $FF, $7F, $7D, $12, $D6, $10, $FF, $7F, $16, $6B, $AC, $3D, $DE, $32
+.byte $97, $09, $7F, $13, $BA, $0A, $33, $01, $00, $00, $15, $35, $D0, $24, $68, $14
+.byte $00, $00, $FF, $7F, $B5, $56, $29, $25, $74, $4A, $AE, $35, $08, $31, $0D, $59
+.byte $6B, $2C, $F8, $4A, $DD, $7F, $17, $6B, $AB, $41, $1F, $0F, $18, $06, $2F, $05
+.byte $00, $00, $FF, $7F, $B5, $56, $29, $25, $DD, $7F, $17, $6B, $AB, $41, $D7, $3E
+.byte $94, $1D, $A7, $7E, $E4, $40, $9F, $43, $9E, $02, $BD, $00, $34, $00, $2B, $00
+.byte $00, $00, $FF, $7F, $B5, $56, $29, $25, $CB, $49, $24, $31, $84, $14, $32, $00
+.byte $29, $00, $5F, $33, $1C, $35, $FF, $7F, $9E, $02, $94, $11, $0E, $09, $88, $00
 
 write_default_palettes_jsl:
   jsr write_default_palettes
@@ -174,12 +179,11 @@ write_default_palettes_jsl:
 
 write_default_palettes:
   STZ CGADD
-  sta CGADD
   LDY #$00
-: LDA snes_sprite_palatte, y
+: LDA snes_default_bg_palette, y
   STA CGDATA
   INY
-  CMP #$40
+  CPY #$80
   BNE :-
 
 
@@ -189,9 +193,240 @@ write_default_palettes:
 : LDA snes_sprite_palatte, y
   STA CGDATA
   INY
-  CMP #$40
+  CPY #$80
   BNE :-
   rts
+
+load_palette_for_level_long:
+  jsr load_palette_for_level
+  RTL
+
+load_palette_for_level:
+  PHB
+  PHK
+  PLB
+
+  PHA
+  PHY
+
+  LDA $00
+  PHA
+  LDA $01
+  PHA
+
+  ; todo, if state == $0C (map) then check if prev level == current level
+  ; if so load per level palette, otherwise load map palette
+  ; this ensures we load the right palette for the first screen after the map
+  LDA SYSTEM_STATE
+    CMP #$05 ; falling
+    BEQ load_per_level_palette
+  CMP #$0C
+  BNE :+    
+    LDA PREV_LEVEL_INDEX
+    CMP #$0A
+    ; lvl 10 is special, and we dont want to update it just yet.
+    BEQ not_new_level
+
+    CMP LEVEL_INDEX
+    BEQ load_per_level_palette
+  not_new_level:
+    BRA load_per_system_state_palette
+:
+  CMP #$04
+  BNE load_per_system_state_palette
+    LDA $19 ; this is subsystem state, > 0 means we're loading level and not intro
+    BEQ load_per_system_state_palette
+    BRA load_per_level_palette
+
+load_per_system_state_palette:
+  LDA SYSTEM_STATE
+  TAY
+  LDA system_state_palettes, Y
+  CMP #$FF ; Gameplay
+  BNE palette_index_selected  
+  
+load_per_level_palette:
+  LDA LEVEL_INDEX  
+  ; ensure level index is within range, looping the game adds 18 to the level counter
+: CMP #$13
+  BCC :+
+    SEC
+    SBC #$13
+    BRA :-
+  :
+
+  TAY
+  LDA per_level_palettes, Y
+
+palette_index_selected:
+  STA TMP_CURR_LOADED_EXTENDED_PALETTE
+  ASL A
+  TAY
+  PHY
+
+  LDA snes_palette_adddresses, Y
+  STA $00
+  LDA snes_palette_adddresses + 1, Y
+  STA $01
+
+  STZ CGADD
+  LDY #$00
+: LDA ($00), y
+  STA CGDATA
+  INY
+  CPY #$80
+  BNE :-
+
+
+  PLY
+  LDA snes_sprite_palette_adddresses, Y
+  STA $00
+  LDA snes_sprite_palette_adddresses + 1, Y
+  STA $01
+
+  LDA #$80
+  STA CGADD
+  LDY #$00
+: LDA ($00), y
+  STA CGDATA
+  INY
+  CPY #$80
+  BNE :-
+
+  PLA 
+  STA $01
+
+  PLA
+  STA $00
+
+  PLY
+  PLA
+  PLB
+
+  RTS
+
+; $0018              System State
+; 00 = Booting        ; 01 = Title Screen ; 02 = Demo Mode      ; 03 = Start Game;
+; 04 = Introduction   ; 05 = Gameplay     ; 06 = Respawning     ; 07 = Game Over;
+; 08 = Door Transition; 09 = Autowalk     ; 0a = Entering Castle; 0b = Autoclimb;
+; 0c = Scoring & Map  ; 0d = Continue     ; 0e = Falling        ; 0f = Ending
+system_state_palettes:
+.byte $00, $00, $FF, $01
+.byte $01, $FF, $FF, $01
+.byte $FF, $FF, $01, $FF
+.byte $09, $01, $FF, $0A
+
+per_level_palettes:
+.byte $02, $02, $02, $02 ; 0 - 3: level 1
+.byte $03, $03, $03 ; 4 - 6 level 2
+.byte $04, $04, $04 ; 7 - 9 level 3
+.byte $05, $05, $05 ; 10 - 12 level 4
+.byte $06, $06, $06 ; 13 - 15 level 5
+.byte $07, $07 ; 16 - 17 level 6
+.byte $08 ; 18 - Dracula
+; extra
+.byte $03, $03, $03, $03, $03, $03, $03, $03, $03, $03, $03, $03, $03
+
+snes_palette_adddresses:
+.addr palette_0
+.addr palette_1
+.addr palette_2
+.addr palette_3
+.addr palette_4
+.addr palette_5
+.addr palette_6
+.addr palette_7
+.addr palette_8
+.addr palette_9
+.addr palette_10
+
+snes_sprite_palette_adddresses:
+.addr sprite_palette_0
+.addr sprite_palette_1
+.addr sprite_palette_2
+.addr sprite_palette_3
+.addr sprite_palette_4
+.addr sprite_palette_5
+.addr sprite_palette_6
+.addr sprite_palette_7
+.addr sprite_palette_8
+.addr sprite_palette_9
+.addr sprite_palette_10
+
+.align 256
+palette_0:
+.incbin "./16bit-tiles/bg_16bit_palette_00.bin"
+
+; intro / ending
+palette_1:
+.incbin "./16bit-tiles/bg_16bit_palette_01.bin"
+
+; level 1 - 4 
+palette_2:
+.incbin "./level-layouts/level-1/palette.bin"
+
+; level 5 - 7
+palette_3:
+.incbin "./level-layouts/level-2/palette.bin"
+
+palette_4:
+.incbin "./level-layouts/level-3/palette.bin"
+
+palette_5:
+.incbin "./level-layouts/level-4/palette.bin"
+
+palette_6:
+.incbin "./level-layouts/level-5/palette.bin"
+
+palette_7:
+.incbin "./level-layouts/level-6/palette.bin"
+
+palette_8:
+.incbin "./level-layouts/dracula/palette.bin"
+
+palette_9:
+.incbin "./16bit-tiles/bg_16bit_palette_09.bin"
+
+palette_10:
+.incbin "./16bit-tiles/bg_16bit_palette_10.bin"
+
+.align 256
+sprite_palette_0:
+.incbin "./16bit-tiles/sprite_16bit_palette_00.bin"
+
+; intro / ending
+sprite_palette_1:
+.incbin "./16bit-tiles/sprite_16bit_palette_01.bin"
+
+; level 1 - 4 
+sprite_palette_2:
+.incbin "./16bit-tiles/sprite_16bit_palette_02.bin"
+
+; level 5 - 7
+sprite_palette_3:
+.incbin "./16bit-tiles/sprite_16bit_palette_03.bin"
+
+sprite_palette_4:
+.incbin "./16bit-tiles/sprite_16bit_palette_04.bin"
+
+sprite_palette_5:
+.incbin "./16bit-tiles/sprite_16bit_palette_05.bin"
+
+sprite_palette_6:
+.incbin "./16bit-tiles/sprite_16bit_palette_06.bin"
+
+sprite_palette_7:
+.incbin "./16bit-tiles/sprite_16bit_palette_07.bin"
+
+sprite_palette_8:
+.incbin "./16bit-tiles/sprite_16bit_palette_08.bin"
+
+sprite_palette_9:
+.incbin "./16bit-tiles/sprite_16bit_palette_09.bin"
+
+sprite_palette_10:
+.incbin "./16bit-tiles/sprite_16bit_palette_10.bin"
+
 
 ; assumes CGADD is already set
 ; nes color is in A
@@ -306,20 +541,20 @@ option_palette_loop:
 
     
 default_options_bg_palette_indexes:
-.byte $0F, $07, $00, $01, $0F, $02, $01, $1C, $0F, $0A, $18, $28, $0F, $17, $19, $10
+.byte $0F, $10, $00, $17, $0F, $10, $16, $25, $0F, $01, $19, $09, $0F, $30, $26, $16
 
 default_options_sprite_palette_indexes:
-.byte $0F, $30, $15, $0F, $0F, $30, $00, $0F, $0F, $3B, $1B, $0F, $0F, $06, $16, $38
+.byte $0F, $27, $37, $07, $0F, $23, $34, $0F, $0F, $37, $11, $0F, $0F, $16, $25, $0F
 
 default_options_palette:
-.byte $00, $00, $FF, $7F, $74, $64, $42, $50, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $F7, $02, $33, $01, $6A, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $29, $6F, $07, $02, $A0, $44, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $BF, $65, $8C, $31, $76, $3C, $00, $00, $00, $00, $00, $00, $00, $00
-.byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+.byte $00, $00, $B5, $56, $8C, $31, $33, $01, $76, $19, $F6, $25, $DA, $36, $9F, $43
+.byte $94, $4A, $10, $3A, $09, $1D, $C6, $18, $44, $10, $CC, $10, $48, $08, $24, $04
+.byte $00, $00, $B5, $56, $D6, $10, $BF, $65, $0C, $00, $10, $00, $94, $10, $94, $4A
+.byte $10, $3A, $8C, $31, $EA, $18, $C8, $10, $46, $08, $AF, $31, $2D, $1D, $08, $00
+.byte $00, $00, $A0, $44, $07, $02, $21, $01, $80, $00, $C2, $00, $86, $11, $8E, $2A
+.byte $00, $20, $B5, $56, $94, $4A, $10, $3A, $8C, $31, $C8, $28, $46, $18, $04, $18
+.byte $00, $00, $FF, $7F, $1F, $3A, $D6, $10, $3F, $5F, $BF, $4A, $DA, $0C, $54, $46
+.byte $3D, $0D, $5B, $67, $D9, $0C, $6C, $00, $6F, $21, $1F, $3A, $D6, $10, $6C, $04
 
 options_sprite_palette:
 .byte $00, $00, $FF, $7F, $1F, $3A, $6A, $00, $00, $00, $00, $00, $00, $00, $00, $00

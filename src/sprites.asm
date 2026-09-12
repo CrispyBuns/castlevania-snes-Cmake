@@ -4,9 +4,9 @@ translate_8_by_16_sprites:
   jsl enable_nmi
   RTL
 
-
-  LDX #$03
-  LDY #$00
+; we skip the first sprite because it's the sprite 0 sprites we don't care about.
+  LDX #$07
+  LDY #$08 ; - first nes sprite (8x16) is two SNES 8x8 sprites
 traslation_start:
   LDA $0200,X
   STA SNES_OAM_START + 0,Y
@@ -218,8 +218,8 @@ totals_sprite_conversion:
     setXY16
     LDA #$00
     XBA
-    LDX #$0000
-    LDY #$0000
+    LDX #$0004
+    LDY #$0008
 LoopSprite:
     ; Y coordinate
     LDA OAMNES_Y, X

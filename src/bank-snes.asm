@@ -137,7 +137,7 @@ initialize_registers:
   JSR zero_all_palette
 
   STA OBSEL
-  LDA #$41
+  LDA #$11
   STA BG12NBA
   LDA #$77
   STA BG34NBA
@@ -201,6 +201,8 @@ initialize_registers:
   ; jslb draw_msu_bg2, $b2
   jslb do_intro, $b1
   
+  LDA #$41
+  STA BG12NBA
   jslb draw_msu_bg2, $b2
   ; LDA #$00
   LDA #$01 ; uncomment this to use auto-poll joypad
@@ -223,6 +225,15 @@ intro_done:
   JSR write_default_palettes
   LDA #$FF
   STA PALETTE_FILTER
+
+  STZ $1000
+  STZ $1001
+  STZ $1002
+  STZ $1003
+  STZ $1004
+  STZ $1005
+  STZ $1006
+  STZ $1007
 
   ; JSR write_stack_adjustment_routine_to_ram
   ; JSR write_sound_hijack_routine_to_ram
@@ -539,6 +550,10 @@ check_for_palette_swap:
   LDA $F5
   AND #$20
   BEQ :++
+
+  LDA OPTIONS_16BIT_TILES
+  ; don't allow swapping of palette if we're in 16 bit tile mode
+  BNE :++
 
     STZ NMITIMEN
 

@@ -1,4 +1,4 @@
-NUM_OPTIONS = 8
+NUM_OPTIONS = 9
 
 
 ; Toggle current option
@@ -37,6 +37,10 @@ toggle_current_option:
     CMP #7
     BNE :+
     JMP increment_controls
+:
+    CMP #8
+    BNE :+
+    JMP increment_graphics
 :
 RTS
 
@@ -78,6 +82,10 @@ decrement_current_option:
     BNE :+
     JMP decrement_controls
 :
+    CMP #8
+    BNE :+
+    JMP decrement_graphics
+:
 RTS
 
 initialize_options:
@@ -89,6 +97,7 @@ initialize_options:
    jsr update_playlist
    jsr update_rumble
    jsr update_controls
+   jsr update_graphics
     rts
 
 option_palette_choice_tiles:
@@ -127,6 +136,14 @@ increment_palette:
 	BRA update_palette
 
 update_palette:
+
+	LDA OPTIONS_16BIT_TILES
+	BEQ :+
+		LDA OPTIONS_PALETTE
+		BEQ :+
+		rts
+	:
+
 	LDA RDNMI
 :	LDA RDNMI
 	BPL :-
@@ -580,32 +597,62 @@ update_controls:
 	jsr option_7_side_effects
 	rts
 
+option_graphics_choice_tiles:
+.byte $18, $34, $18, $34, $18, $34, $18, $34, $18, $28, $18, $2B, $18, $22, $18, $20, $18, $22, $18, $27, $18, $1A, $18, $25, $18, $34, $18, $34, $18, $34, $18, $34
+.byte $18, $34, $18, $34, $18, $34, $18, $34, $18, $34, $18, $11, $18, $16, $18, $36, $18, $1B, $18, $22, $18, $2D, $18, $34, $18, $34, $18, $34, $18, $34, $18, $34
 
+decrement_graphics:
+	dec $0868
+	BPL :+
+		LDA #2
+		DEC A
+		STA $0868
+	:
+	BRA update_graphics
 
-; Which Option are we on sprites
-option_sprite_y_pos:
-.byte $17
-.byte $1F
-.byte $27
-.byte $2F
-.byte $37
-.byte $3F
-.byte $47
-.byte $4F
-; X, Y, Tile, attributes
-options_sprites:
-.byte  $04, $17, $3B, $42   ; Option Selection
+increment_graphics:
+	inc $0868
+	lda $0868
+ 	CMP #2
+	BNE :+	
+		LDA #$00
+	:
+	STA $0868
+	BRA update_graphics
 
-	.byte 120, 184, $B0, $40 ; tank sprite 1/6
-	.byte 128, 184, $A0, $40 ; tank sprite 2/6
-	.byte 136, 184, $A5, $20 ; tank sprite 3/6
-	.byte 120, 192, $C0, $20 ; tank sprite 4/6
-	.byte 128, 192, $E0, $20 ; tank sprite 5/6
-	.byte 136, 192, $D0, $20 ; tank sprite 6/6
+update_graphics:
+	LDA RDNMI
+:	LDA RDNMI
+	BPL :-
 
-	.byte 104, 184, $e2, $22 ; Enemy Sprite x/4
-	.byte  96, 184, $e1, $22 ; Enemy Sprite x/4
-	.byte 104, 192, $e4, $22 ; Enemy Sprite x/4
-	.byte  96, 192, $e3, $22 ; Enemy Sprite x/4
-	.byte $FF
-	
+	setAXY16
+	LDA $0868
+	AND #$00FF
+
+	ASL
+	ASL
+	ASL
+	ASL
+	ASL
+	TAY
+
+	LDA #$21
+	XBA
+	ORA #$6C
+	STA VMADDL
+	setA8
+
+	LDX #$0000
+:	LDA option_graphics_choice_tiles, Y
+	STA VMDATAH
+	LDA option_graphics_choice_tiles + 1, Y
+	STA VMDATAL
+	INX
+	INY
+	INY
+	CPX #$0010
+	BNE :-
+	setAXY8
+	jsr option_8_side_effects
+	rts
+

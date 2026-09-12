@@ -166,7 +166,7 @@ func convertStringToTiles(name string) []byte {
 func write_options_sprites(options []Option, outAsmFile *os.File) {
 
 outAsmFile.WriteString("\n\n; Which Option are we on sprites\n")
- outAsmFile.WriteString("option_sprite_y_pos:\n")
+outAsmFile.WriteString("option_sprite_y_pos:\n")
  for i := 0; i < len(options); i++ {
   outAsmFile.WriteString(fmt.Sprintf(".byte $%02X\n", 0x17 + i * 0x08))	
 }
@@ -279,6 +279,8 @@ func main() {
 		{Index: 5, Name: "PLAYLIST", Values: []string{"ORCHESTRAL","PROG METAL","CHRONICLES","VRC6","MSX SCC", "ADLIB OPL2"}},
 		{Index: 6, Name: "RUMBLE", Values: []string{"ON","OFF"}},
 		{Index: 7, Name: "CONTROLS", Values: []string{"R-SWAP X-USE","R-USE X-SWAP"}},
+		{Index: 8, Name: "GRAPHICS", Values: []string{"ORIGINAL", "16-BIT"}},
+		// {Index: 9, Name: "SKIP2LVL", Values: []string{"NONE", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"}},
 	
 	}
 
@@ -289,5 +291,5 @@ func main() {
         generate_options(option.Index, option.Name, option.Values, outFile, outAsmFile)
     }
 
-	write_options_sprites(options, outAsmFile)
+	// write_options_sprites(options, outAsmFile)
 }

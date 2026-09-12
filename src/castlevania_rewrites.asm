@@ -120,9 +120,20 @@ write_tiles:
     LDA #$80
     STA VMAIN
 
+    LDA OPTIONS_16BIT_TILES
+    BEQ original_tiles
+
     LDA PREV_NES_BANK
     CLC
-    ADC #$A8
+    ADC #$18 ; needs to be #$18 for 16 bit tiles
+    BRA set_bank
+
+  original_tiles:
+    LDA PREV_NES_BANK
+    CLC
+    ADC #$A8 ; needs to be #$18 for 16 bit tiles
+
+  set_bank:
     STA A1B6
 
     ; address needs to be:
@@ -190,6 +201,9 @@ write_tiles:
 
     LDA VMAIN_STATE
     STA VMAIN
+
+    ; now that we've written the tiles, we need to write the proper SNES palette
+    jslb load_palette_for_level_long, $a0
 
     rtl
 
@@ -370,6 +384,7 @@ input_additions:
     PLA
     AND button_configs_swap, Y
     BEQ :+
+
         LDA OTHER_SUB_WEAPON_HELD
         BEQ :+
             PHA
@@ -402,6 +417,8 @@ redraw_multiplier:
   BEQ :+
     LDA $18
     CMP #$0E  ; we're in the 1 falling cutscene, don't do any drawing
+    BEQ :+
+    CMP #$0F  ; ending cutscene, don't do any drawing
     BEQ :+
     STZ MULTIPLIER_NEEDS_REDRAW
     LDA CURRENT_SUB_WEAPON_MULT
@@ -448,3 +465,30 @@ redraw_multiplier:
     STA VMDATAL
     setAXY8
     rtl
+
+
+setup_ending_rewrite:
+    LDA #$0F
+    STA SYSTEM_STATE
+
+    jslb load_palette_for_level_long, $a0
+    JML $A7C373
+
+; replaces C31F
+setup_level_load_palette_swaps:
+  LDA #$00
+  STA $19
+  LDA #$05
+  STA $18
+  STA $1F
+
+  PHA
+  LDA LEVEL_INDEX
+  CMP #$0A
+  BNE :+
+    jslb disable_nmi_and_fblank_no_store, $a0
+    jslb load_palette_for_level_long, $a0
+    jslb reset_inidisp, $a0
+  :
+  PLA
+  RTL

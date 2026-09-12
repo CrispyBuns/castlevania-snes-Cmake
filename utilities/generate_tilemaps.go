@@ -80,8 +80,8 @@ func main() {
 	}
 
 	pauseBg2Lines := []string{
-		 "^&    PROG METAL   ^&",
 		 "^&    ORCHESTRAL   ^&",
+		 "^&    PROG METAL   ^&",
 		 "^&    CHRONICLES   ^&",
 		 "^&       VRC6      ^&",
 		 "^&      MSX SCC    ^&",

@@ -1,4 +1,4 @@
-## Castlevania SNES Port - V 1.0
+## Castlevania SNES Port - V 1.3
 
 This is a 1:1 port of the NES version of Castlevania, running on the SNES. It is utilizing FastROM/HiROM.
 
@@ -30,6 +30,8 @@ Additionally, the following Quality of Life options are available:
 5. A & X buttons will fire your subweapons
 6. You can now hold a 2nd subweapon and swap with the R button.  Upon pickup up a subweapon, your current weapon (with it's multipler) will swap out.  Press R to swap back and forth between them.
 7. Initial Rumble support.  If you have access to a rumble controller, various events in the game will provide tactile feedback!
+8. Optional upgraded 16 bit tileset and palettes!  Tileset and palettes modified by Fiuke Bnuy
+
 
 ## MSU-1 Track List
 Track Indexes:
@@ -61,6 +63,16 @@ MSX SCC - Jan Van Valburg, sl3DZ
 Adlib OPL2 - MelonadeM
 
 PCM Packs have been arranged and leveled by Batty
+
+## 16 - Bit Tile Credits
+
+Sprite Porting by Fiuke Bnuy
+
+(Base) Title Screen - kya (Romhacking.net)
+(Base) Simon Belmont (SSBU) (NES-Style) - hansungkee (The Sprite Resource)
+Gigant Bat 2 - logan232 (The Sprite Resource)
+Some Tiles and Monsters - kya (Romhacking.net)
+most of the tiles - Castlevania (Java Version)
 
 ## Prerequisites
 

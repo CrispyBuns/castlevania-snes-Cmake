@@ -1,0 +1,1 @@
+.incbin "./16bit-tiles/bg_16bit_palette_08.bin"

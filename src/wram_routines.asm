@@ -455,6 +455,17 @@ bank_switch_rewrite:
 
   TYA
   INC
+  CMP #$05 ; special rule for bank 5
+  BNE :++
+    PHA
+    LDA OPTIONS_16BIT_TILES
+    BEQ :+
+        PLA
+        ORA #$10
+        BRA :++
+    :
+    PLA
+  :
   ORA #$A0
   STA BANK_SWITCH_DB
   PHA
@@ -739,10 +750,23 @@ set_starting_loop:
   PHA
   LDA OPTIONS_LOOP
   STA $2B
-  PLA
+  LDA OPTIONS_SKIP_TO_LEVEL
+  BEQ :+
+    LDA #$03
+    STA $28
+    LDA #$02
+    STA $70
+    LDA #$09
+    STA $015B
+    LDA #$0B
+    STA OTHER_SUB_WEAPON_HELD
+    BRA :++
+  :
   STZ $28    
-  STZ $0434
   STZ $70
+  :
+  STZ $0434
+  PLA
   LDX #$01
   STX $2C
   rts
@@ -752,5 +776,19 @@ get_hit_side_effects:
   STA RUMBLE_WAVE_FORM_PLAYING
   STZ RUMBLE_WAVE_FORM_IDX
   rts
+
+skip_to_level:
+    LDA OPTIONS_SKIP_TO_LEVEL
+    BNE :+
+        INC $28
+        LDA #$02
+        RTS
+:   
+    CLC
+    ADC #$03
+    STA $28
+    STZ OPTIONS_SKIP_TO_LEVEL
+    LDA #$02
+    RTS
 
 routines_end:

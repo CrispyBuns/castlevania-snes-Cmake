@@ -144,22 +144,6 @@ exit_rumble_wave:
 
 check_for_rumble:
     PHA
-    ; disabling whip for now.
-    ; CMP #$09
-    ; BNE :++
-    ;     LDA $450
-    ;     ; $450 tracks if the player sprite is mirrored
-    ;     ; so if we're mirrored, rumble left
-    ;     BEQ :+
-    ;         LDA #$03
-    ;         STA RUMBLE_WAVE_FORM_PLAYING
-    ;         BRA exit_rumble_check
-    ;     :
-    ;     LDA #$02
-    ;     STA RUMBLE_WAVE_FORM_PLAYING
-    ;     BRA exit_rumble_check
-    ; :
-
     ; orb
     CMP #$48
     BNE :+
