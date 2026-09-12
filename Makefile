@@ -3,48 +3,90 @@
 # Supports: Linux, macOS, Termux, MSYS2
 # ========================================================================
 
+# ---- Verbosity ----
+# make V=1 for full command echo
+V ?= 0
+ifeq ($(V),0)
+Q := @
+else
+Q :=
+endif
+
 # ---- Platform Detection & Configuration ----
 UNAME_S := $(shell uname -s)
 EXE := $(if $(filter MINGW%,$(UNAME_S)),.exe)
 TIMESTAMP := $(shell date '+%Y%m%d%H%M%S')
 
 # ---- Project Layout ----
-GAME := Castlevania
-SRCDIR := src
-OUTDIR := out
+GAME    ?= Castlevania
+SRCDIR  ?= src
+OUTDIR  ?= out
 ARCHDIR := $(OUTDIR)/buildarchive
+DEPDIR  := $(OUTDIR)/deps
 
-# ---- Tool Paths ----
-CA65 := ca65$(EXE)
-LD65 := ld65$(EXE)
-GO := go$(EXE)
-ASAR := asar$(EXE)
+# ---- Tool Paths (override with `make CA65=/path/to/ca65` etc.) ----
+CA65 ?= ca65$(EXE)
+LD65 ?= ld65$(EXE)
+GO   ?= go$(EXE)
+ASAR ?= asar$(EXE)
 
-# Emulator discovery (prioritized)
-EMU := $(or $(shell command -v Mesen-S$(EXE) 2>/dev/null),\
-            $(shell command -v higan$(EXE) 2>/dev/null),\
-            $(shell command -v snes9x$(EXE) 2>/dev/null))
+# Point this at a local cc65 build/snapshot dir (e.g. a fresh MSYS2 build)
+# to fall back to it when the tool isn't already on PATH, same as
+# build.sh's `export PATH=$PATH:../cc65-snapshot-win32/bin`.
+#   make CC65_DIR=../cc65-snapshot-win32/bin
+CC65_DIR ?=
+ifneq ($(strip $(CC65_DIR)),)
+export PATH := $(PATH):$(CC65_DIR)
+endif
+
+# Assembler flags (append DEBUG=0 to drop -g)
+DEBUG ?= 1
+CA65FLAGS := $(if $(filter 1,$(DEBUG)),-g)
+
+# build.sh generates the options screen only when that block is
+# uncommented - it's optional there, so mirror that: off by default,
+# turn on with `make BUILD_OPTIONS=1`.
+BUILD_OPTIONS ?= 0
+
+# build.sh always does a build -> extract WRAM -> rebuild two-pass link
+# so the WRAM routines baked into the ROM are current. Keep that as the
+# default here too; `make AUTO_WRAM=0` skips the second pass for a
+# faster single-pass build during iteration.
+AUTO_WRAM ?= 1
+
+# ---- Emulator discovery ----
+# Deferred with `=` (not `:=`) so the three `command -v` subprocess calls
+# only ever run if something actually expands $(EMU) - i.e. the `run`
+# target - instead of on every invocation of make (clean, help, etc).
+EMU = $(or $(shell command -v Mesen-S$(EXE) 2>/dev/null),\
+           $(shell command -v higan$(EXE) 2>/dev/null),\
+           $(shell command -v snes9x$(EXE) 2>/dev/null))
 
 # ---- Generated Files ----
-GEN_FILES := $(SRCDIR)/options.bin \
-             $(SRCDIR)/options_macro_defs.asm \
-             $(SRCDIR)/pause-bg2.bin \
-             $(SRCDIR)/msu1-credits.bin
+OPTIONS_FILES  := $(SRCDIR)/options.bin $(SRCDIR)/options_macro_defs.asm
+TILEMAP_FILES  := $(SRCDIR)/pause-bg2.bin $(SRCDIR)/msu1-credits.bin
+GEN_FILES      := $(TILEMAP_FILES) $(if $(filter 1,$(BUILD_OPTIONS)),$(OPTIONS_FILES))
 
-SPC_BIN := $(SRCDIR)/spc/spc.bin
+SPC_BIN  := $(SRCDIR)/spc/spc.bin
 WRAM_BIN := $(SRCDIR)/wram_routines.bin
 
 # ---- Build Targets ----
 ROM := $(OUTDIR)/$(GAME).sfc
 OBJ := $(OUTDIR)/main.o
+DEP := $(DEPDIR)/main.d
 
-# ========================================================================
-# Targets
-# ========================================================================
+# ---- Safety / hygiene ----
+.SUFFIXES:
+.DELETE_ON_ERROR:
+MAKEFLAGS += --no-print-directory
 
-.PHONY: all clean run archive extract_wram rebuild_wram spc check-tools help
+.PHONY: all clean run archive extract_wram rebuild_wram spc check-tools help info
 
-all: $(ROM) archive
+ifeq ($(AUTO_WRAM),1)
+all: check-tools rebuild_wram archive
+else
+all: check-tools $(ROM) archive
+endif
 	@echo "[OK] Build complete: $(ROM)"
 
 help:
@@ -57,34 +99,43 @@ help:
 	@echo "  archive          - Archive current ROM"
 	@echo "  check-tools      - Verify required tools"
 	@echo "  clean            - Remove all generated files"
+	@echo ""
+	@echo "Useful flags:"
+	@echo "  make V=1              - verbose command output"
+	@echo "  make DEBUG=0          - build without ca65 -g debug info"
+	@echo "  make CA65=path        - override a tool path (also LD65/GO/ASAR)"
+	@echo "  make CC65_DIR=path    - append a local cc65 build/snapshot dir to PATH"
+	@echo "  make BUILD_OPTIONS=1  - also generate the options screen (off by default)"
+	@echo "  make AUTO_WRAM=0      - skip the automatic build->extract->rebuild WRAM pass"
 
 check-tools:
-	@echo "Checking required tools..."
 	@command -v $(CA65) >/dev/null || (echo "ERROR: ca65 not found" && exit 1)
 	@command -v $(LD65) >/dev/null || (echo "ERROR: ld65 not found" && exit 1)
-	@command -v $(GO) >/dev/null || (echo "ERROR: go not found" && exit 1)
+	@command -v $(GO)   >/dev/null || (echo "ERROR: go not found" && exit 1)
 	@echo "[OK] All required tools found"
 
 # ---- Directory Setup ----
-$(OUTDIR) $(ARCHDIR):
-	@mkdir -p $@
+$(OUTDIR) $(ARCHDIR) $(DEPDIR):
+	$(Q)mkdir -p $@
 
-# ---- Generate Files (Consolidated) ----
-$(SRCDIR)/options.bin $(SRCDIR)/options_macro_defs.asm: | $(OUTDIR)
+# ---- Generate Files ----
+# Grouped targets (&:) tell make these two outputs come from ONE recipe
+# invocation, so `make -j` can't race and run the generator twice.
+$(OPTIONS_FILES) &: | $(OUTDIR)
 	@echo "Generating options..."
-	@$(GO) run utilities/generate_options_asm.go
-	@mv -f options.bin $(SRCDIR)/ && mv -f options_macro_defs.asm $(SRCDIR)/
+	$(Q)$(GO) run utilities/generate_options_asm.go
+	$(Q)mv -f options.bin $(SRCDIR)/ && mv -f options_macro_defs.asm $(SRCDIR)/
 
-$(SRCDIR)/pause-bg2.bin $(SRCDIR)/msu1-credits.bin: | $(OUTDIR)
+$(TILEMAP_FILES) &: | $(OUTDIR)
 	@echo "Generating tilemaps..."
-	@$(GO) run utilities/generate_tilemaps.go
-	@mv -f pause-bg2.bin $(SRCDIR)/ && mv -f msu1-credits.bin $(SRCDIR)/
+	$(Q)$(GO) run utilities/generate_tilemaps.go
+	$(Q)mv -f pause-bg2.bin $(SRCDIR)/ && mv -f msu1-credits.bin $(SRCDIR)/
 
 # ---- SPC Binary ----
 spc: $(SPC_BIN)
 
 $(SPC_BIN): $(SRCDIR)/spc/spc.asm
-	@if command -v $(ASAR) >/dev/null 2>&1; then \
+	$(Q)if command -v $(ASAR) >/dev/null 2>&1; then \
 		echo "Building SPC..."; \
 		$(ASAR) $< $@; \
 		echo "[OK] Built: $@"; \
@@ -96,22 +147,27 @@ $(SPC_BIN): $(SRCDIR)/spc/spc.asm
 # ---- WRAM Initialization ----
 $(WRAM_BIN):
 	@echo "Creating placeholder WRAM binary..."
-	@touch $@
+	$(Q)touch $@
 
 # ---- Main Assembly & Linking ----
-$(OBJ): $(SRCDIR)/main.asm $(GEN_FILES) $(WRAM_BIN) $(SPC_BIN) | $(OUTDIR)
+# --create-dep emits a Makefile-format dependency file listing every
+# .inc/.asm the source pulls in, so editing an included file now
+# correctly triggers a reassembly (previously untracked).
+$(OBJ): $(SRCDIR)/main.asm $(GEN_FILES) $(WRAM_BIN) $(SPC_BIN) | $(OUTDIR) $(DEPDIR)
 	@echo "Assembling..."
-	@$(CA65) $< -o $@ -g
+	$(Q)$(CA65) $< -o $@ $(CA65FLAGS) --create-dep $(DEP)
 
 $(ROM): $(OBJ) | $(OUTDIR)
 	@echo "Linking..."
-	@$(LD65) -C $(SRCDIR)/hirom.cfg -o $@ $<
+	$(Q)$(LD65) -C $(SRCDIR)/hirom.cfg -o $@ $<
 	@echo "[OK] ROM generated: $@"
+
+-include $(DEP)
 
 # ---- WRAM Extraction & Rebuild ----
 extract_wram: $(ROM)
 	@echo "Extracting WRAM routines..."
-	@if command -v xxd >/dev/null 2>&1; then \
+	$(Q)if command -v xxd >/dev/null 2>&1; then \
 		xxd -s 0x1800 -l 0x800 -r $(ROM) $(WRAM_BIN); \
 	else \
 		dd if=$(ROM) of=$(WRAM_BIN) bs=1 skip=6144 count=2048 2>/dev/null; \
@@ -120,19 +176,19 @@ extract_wram: $(ROM)
 
 rebuild_wram: extract_wram $(OBJ)
 	@echo "Rebuilding ROM with WRAM..."
-	@$(LD65) -C $(SRCDIR)/hirom.cfg -o $(ROM) $(OBJ)
+	$(Q)$(LD65) -C $(SRCDIR)/hirom.cfg -o $(ROM) $(OBJ)
 	@echo "[OK] Rebuild complete: $(ROM)"
 
 # ---- Archiving ----
 archive: $(ROM) | $(ARCHDIR)
-	@cp $(ROM) $(ARCHDIR)/$(GAME)-$(TIMESTAMP).sfc
+	$(Q)cp $(ROM) $(ARCHDIR)/$(GAME)-$(TIMESTAMP).sfc
 	@echo "[OK] Archived to: $(ARCHDIR)/$(GAME)-$(TIMESTAMP).sfc"
 
 # ---- Run in Emulator ----
 run: all
-	@if [ -n "$(EMU)" ]; then \
+	$(Q)if [ -n "$(EMU)" ]; then \
 		echo "Launching: $(EMU)"; \
-		$(EMU) $(ROM) &; \
+		"$(EMU)" $(ROM) & \
 	else \
 		echo "Error: No SNES emulator found in PATH"; \
 		echo "Install one of: Mesen-S (recommended), Higan, or Snes9x"; \
@@ -142,14 +198,13 @@ run: all
 # ---- Cleanup ----
 clean:
 	@echo "Cleaning..."
-	@rm -rf $(OUTDIR) $(GEN_FILES) $(WRAM_BIN) $(SPC_BIN)
+	$(Q)rm -rf $(OUTDIR) $(GEN_FILES) $(WRAM_BIN) $(SPC_BIN)
 	@echo "[OK] Clean complete"
 
 # ========================================================================
 # Debug Targets (Optional - Remove if not needed)
 # ========================================================================
 
-.PHONY: info
 info:
 	@echo "Platform: $(UNAME_S)"
 	@echo "CA65: $$(command -v $(CA65) 2>/dev/null || echo 'not found')"
